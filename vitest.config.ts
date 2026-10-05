@@ -9,8 +9,10 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     env: {
-      // Test-only value. Real secrets never live in source code.
-      AUTH_SECRET: "test-only-secret-that-is-at-least-32-characters-long",
+      // Test-only placeholders. Tests mock Supabase and Prisma; no real credentials are ever used.
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.test",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
+      SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
       NODE_ENV: "test",
     },
   },
