@@ -1,0 +1,133 @@
+// PNG Materials Marketplace - Phase 1 (Foundation) schema.
+//
+// Phase 1 tables ONLY: users, customer_profiles, supplier_profiles, product_categories, audit_logs.
+// Later phases add their own tables and migrations (products, RFQs, quotations, orders, ...).
+//
+// Authentication lives in Supabase Auth (the Supabase-managed `auth` schema). This schema stores
+// application/profile data only: there is NO password column and NO foreign key to the `auth` schema.
+// `users.id` holds the Supabase Auth user UUID.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Runtime connection: Supabase pooled connection (port 6543, ?pgbouncer=true).
+  url       = env("DATABASE_URL")
+  // Migrations / direct operations: direct or session-pooler connection (port 5432).
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  SUPPLIER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+}
+
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// Application user record. `id` = Supabase Auth user UUID (supplied by the application, no DB default).
+/// `role` here is the AUTHORITATIVE application role.
+model User {
+  id          String     @id @db.Uuid
+  role        UserRole   @default(CUSTOMER)
+  fullName    String     @map("full_name")
+  email       String     @unique
+  phone       String?
+  status      UserStatus @default(PENDING)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  lastLoginAt DateTime?  @map("last_login_at") @db.Timestamptz(6)
+
+  customerProfile CustomerProfile?
+  supplierProfile SupplierProfile?
+  auditLogs       AuditLog[]
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model CustomerProfile {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  address   String?
+  location  String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("customer_profiles")
+}
+
+model SupplierProfile {
+  id                  String             @id @default(uuid()) @db.Uuid
+  userId              String             @unique @map("user_id") @db.Uuid
+  businessName        String             @map("business_name")
+  businessDescription String?            @map("business_description")
+  businessAddress     String             @map("business_address")
+  location            String
+  phone               String?
+  email               String?
+  logoUrl             String?            @map("logo_url")
+  verificationStatus  VerificationStatus @default(PENDING) @map("verification_status")
+  deliveryAvailable   Boolean            @default(false) @map("delivery_available")
+  pickupAvailable     Boolean            @default(true) @map("pickup_available")
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([verificationStatus])
+  @@index([location])
+  @@index([businessName])
+  @@map("supplier_profiles")
+}
+
+model ProductCategory {
+  id          String         @id @default(uuid()) @db.Uuid
+  name        String         @unique
+  description String?
+  status      CategoryStatus @default(ACTIVE)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("product_categories")
+}
+
+/// Security-relevant event log. Never store passwords, tokens or other secrets in `metadata`.
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  action       String
+  resourceType String?  @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  metadata     Json?
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
