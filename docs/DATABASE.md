@@ -2,132 +2,82 @@ PNG Materials Marketplace
 
 Database Specification
 
-Version: 0.1
-Database: PostgreSQL
-ORM: Prisma recommended
+Version: 0.1.0 (Phase 1 - Foundation)
+Last reconciled: 2026-10-05
+Database: Supabase PostgreSQL, accessed through Prisma
+
+Part A documents the five tables that exist in Phase 1. Part B keeps the design of later-phase tables. **Part B tables do not exist yet.**
 
 ---
 
-1. Database Principles
+# Part A - Phase 1 tables (implemented)
 
-The database must:
+Source of truth: `prisma/schema.prisma` and `prisma/migrations/20261005000000_phase1_foundation/migration.sql`.
 
-- Use UUIDs or another secure non-sequential identifier strategy where appropriate.
-- Use foreign keys.
-- Use timestamps.
-- Use constraints.
-- Avoid duplicated data where possible.
-- Preserve important historical records.
-- Support future marketplace expansion.
+## A1. Principles
 
-All tables should include appropriate creation/update timestamps.
+- UUID identifiers; timestamps (`timestamptz`) on every table; foreign keys; indexes on lookup columns.
+- Authentication data lives in Supabase Auth, not here: **no password, hash or token columns**.
+- Money columns (later phases) use exact `numeric/decimal`, never floating point. Default currency PGK. No Phase 1 table holds money.
+- Each development phase adds its own tables and its own migration.
 
----
+## A2. Identity link and the Supabase `auth` schema
 
-2. users
+`users.id` is the Supabase Auth user UUID, supplied by the application (no database default). There is **no foreign key** to the `auth` schema, and Prisma does not manage it. Email is stored lowercase (CHECK constraint) and is unique, but identity is the UUID.
 
-Stores authentication and basic user information.
+## A3. Tables
 
-users
------
-id
-role
-full_name
-email
-phone
-password_hash
-status
-created_at
-updated_at
-last_login_at
+### users
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | = Supabase Auth user UUID, no default |
+| role | enum UserRole | CUSTOMER, SUPPLIER, ADMIN; default CUSTOMER; **authoritative role** |
+| full_name | text | |
+| email | text, unique | lowercase enforced by CHECK |
+| phone | text, null | |
+| status | enum UserStatus | ACTIVE, PENDING, SUSPENDED; default PENDING |
+| created_at, updated_at | timestamptz | |
+| last_login_at | timestamptz, null | |
 
-role
+Indexes: unique(email), role, status.
 
-CUSTOMER
-SUPPLIER
-ADMIN
+### customer_profiles
+id (uuid PK), user_id (uuid, **unique**, FK users ON DELETE CASCADE), address (null), location (null), created_at, updated_at. One per CUSTOMER.
 
-status
+### supplier_profiles
+id, user_id (unique, FK users ON DELETE CASCADE), business_name, business_description (null), business_address, location, phone (null), email (null), logo_url (null), verification_status (enum PENDING, VERIFIED, SUSPENDED; default **PENDING**), delivery_available (default false), pickup_available (default true), created_at, updated_at. One per SUPPLIER. Indexes: verification_status, location, business_name.
 
-ACTIVE
-PENDING
-SUSPENDED
+### product_categories
+id, name (**unique**), description (null), status (enum ACTIVE, INACTIVE; default ACTIVE), created_at, updated_at. Seeded with 15 categories.
 
-Email should be unique where email authentication is used.
+### audit_logs
+id, user_id (null, FK users ON DELETE SET NULL), action, resource_type (null), resource_id (null), metadata (jsonb, null), ip_address (null), user_agent (null), created_at. Indexes: user_id, action, created_at. Metadata never holds passwords, tokens or secrets (a sanitiser drops credential-looking keys).
 
-Phone may also be unique if phone authentication is implemented.
+Actions written in Phase 1: USER_REGISTERED, USER_LOGIN, USER_LOGIN_FAILED, USER_LOGOUT, PROFILE_CREATE_FAILED, PROFILE_RECOVERED.
 
----
+## A4. Row Level Security
 
-3. customer_profiles
+RLS is **enabled on all five tables**. No policies exist, so the Supabase REST API (anon / authenticated roles) can read and write nothing. Table privileges are also revoked from those roles. Prisma uses a privileged connection that bypasses RLS; application code enforces authorization (ARCHITECTURE.md A5, A7). Never add `USING (true)` policies.
 
-Additional customer information.
+## A5. Migration strategy and status
 
-customer_profiles
------------------
-id
-user_id
-address
-location
-created_at
-updated_at
+- Connections: `DATABASE_URL` (pooled, port 6543, `?pgbouncer=true`) for runtime; `DIRECT_URL` (direct 5432 or session pooler) for migrations. The direct host may be IPv6-only on the free tier.
+- One migration exists: `20261005000000_phase1_foundation`.
+- **Status: GENERATED BUT UNAPPLIED to Supabase.** No Supabase credentials were available. Apply with `npx prisma migrate deploy` (see SETUP_SUPABASE.md).
+- The migration SQL was written by hand because the Prisma schema engine could not be downloaded in the authoring environment, so `prisma migrate diff` was not used. It was instead applied to a real PostgreSQL 16 and compared against Prisma's data model. Details are in REVIEW.md. Before first use you can re-check with `prisma migrate diff` (command in the migration header).
+- Later phases add their own tables and migrations:
 
-Relationship:
+  products, supplier_products, price_history, projects, project_items, rfqs, rfq_items, rfq_suppliers, quotations, quotation_items, orders, order_items, notifications.
 
-users 1 ─── 1 customer_profiles
+## A6. Seed
+
+`npm run db:seed` upserts the 15 categories by name (idempotent): Cement & Concrete, Steel & Reinforcement, Timber, Roofing, Plumbing, Electrical, Paint, Building Boards, Doors & Windows, Fencing, Water & Tanks, Tools, Safety Equipment, General Hardware, Other. It creates no users, suppliers, customers, passwords or admin accounts. **The seed has not been run** (no database was available).
 
 ---
 
-4. supplier_profiles
+# Part B - Planned tables and rules for later phases (NOT created)
 
-Supplier business information.
-
-supplier_profiles
------------------
-id
-user_id
-business_name
-business_description
-business_address
-location
-phone
-email
-logo_url
-verification_status
-delivery_available
-pickup_available
-created_at
-updated_at
-
-Verification status:
-
-PENDING
-VERIFIED
-SUSPENDED
-
-Relationship:
-
-users 1 ─── 1 supplier_profiles
-
----
-
-5. product_categories
-
-product_categories
-------------------
-id
-name
-description
-status
-created_at
-updated_at
-
-Status:
-
-ACTIVE
-INACTIVE
-
----
+Earlier design, kept for later phases. Where anything here differs from Part A, Part A wins. These tables do not exist in the database.
 
 6. products
 
@@ -489,24 +439,6 @@ related_resource_id:
 
 ---
 
-19. audit_logs
-
-audit_logs
-----------
-id
-user_id
-action
-resource_type
-resource_id
-metadata
-ip_address
-user_agent
-created_at
-
-Do not store passwords or sensitive authentication secrets in audit logs.
-
----
-
 20. Entity Relationship Overview
 
 USERS
@@ -676,52 +608,3 @@ shopping_carts
 multi_supplier_orders
 
 These should NOT be added to the MVP unless required.
-
----
-
-27. Initial Migration Order
-
-Create tables approximately in this order:
-
-1. users
-2. customer_profiles
-3. supplier_profiles
-4. product_categories
-5. products
-6. supplier_products
-7. price_history
-8. projects
-9. project_items
-10. rfqs
-11. rfq_items
-12. rfq_suppliers
-13. quotations
-14. quotation_items
-15. orders
-16. order_items
-17. notifications
-18. audit_logs
-
----
-
-28. Seed Data
-
-Development database should include initial categories:
-
-Cement & Concrete
-Steel & Reinforcement
-Timber
-Roofing
-Plumbing
-Electrical
-Paint
-Building Boards
-Doors & Windows
-Fencing
-Water & Tanks
-Tools
-Safety Equipment
-General Hardware
-Other
-
-Seed data must be clearly identifiable as development/test data and must not be presented as real supplier information.

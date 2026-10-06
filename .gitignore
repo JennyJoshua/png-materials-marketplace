@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# Next.js / build output
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# test output
+coverage/
+
+# environment files - NEVER commit real credentials
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+!.env.example
+
+# logs and OS files
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+
+# Prisma native engine artifacts (downloaded or generated per machine; never commit)
+libquery_engine*
+query_engine*
+schema-engine*
+*.so.node
+*.dylib.node
+*.dll.node
