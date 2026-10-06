@@ -88,7 +88,7 @@ Not tested: real Supabase sign-up and sign-in, real email confirmation, the Pris
 5. Register yourself, confirm the email, and promote to ADMIN with the SQL in section 7.
 6. Create the Render web service and set environment variables; add the Render `/auth/callback` URL to Supabase (docs/SETUP_RENDER.md).
 7. Walk through the post-deploy checks in SETUP_RENDER.md section 6.
-8. The Phase 1 implementation has now been uploaded to GitHub \main` through the ZIP-inbox workflow.`
+8. The Phase 1 implementation has now been uploaded to GitHub `main` through the ZIP-inbox workflow.`
 
 ## 9. Architecture status
 
