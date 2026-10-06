@@ -1,0 +1,271 @@
+name: Process ZIP Inbox
+
+on:
+  push:
+    paths:
+      - "_inbox/*.zip"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: process-zip
+  cancel-in-progress: false
+
+jobs:
+  process-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Import ZIP files into the repository
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          zips=( _inbox/*.zip )
+
+          if [ ${#zips[@]} -eq 0 ]; then
+            echo "No ZIP files found."
+            exit 0
+          fi
+
+          echo "Process ZIP inbox" > /tmp/commit_msg.txt
+
+          python3 - <<'PY'
+          import re
+          import shutil
+          import stat
+          import tempfile
+          import zipfile
+          from pathlib import Path, PurePosixPath
+
+          # ---------------- Settings ----------------
+          MAX_ZIP_BYTES = 50 * 1024 * 1024
+          MAX_FILES = 2000
+          MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
+
+          NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+          # Folders a ZIP is allowed to write into (top level).
+          ALLOWED_DIRS = {
+              "app", "components", "docs", "handovers",
+              "lib", "prisma", "public", "tests",
+          }
+
+          # Never allowed anywhere in a path.
+          BLOCKED_PARTS = {
+              ".git", ".github", "_inbox", "_failed",
+              "node_modules", ".next",
+          }
+
+          repo = Path.cwd().resolve()
+          inbox = Path("_inbox")
+          failed = Path("_failed")
+
+          imported = []
+          rejected = []
+          total_added = 0
+          total_updated = 0
+
+
+          def validate(zf):
+              """Check every entry. Returns a plan. Writes nothing."""
+              infos = zf.infolist()
+
+              if len(infos) > MAX_FILES:
+                  raise ValueError(f"ZIP has more than {MAX_FILES} entries")
+
+              plan = []
+              seen = set()
+              total = 0
+
+              for info in infos:
+                  raw = info.filename.replace("\\", "/")
+
+                  if "\x00" in raw:
+                      raise ValueError("Unsafe path (null byte)")
+                  if raw.startswith("/") or re.match(r"^[A-Za-z]:", raw):
+                      raise ValueError(f"Absolute path not allowed: {raw}")
+
+                  parts = [
+                      x for x in PurePosixPath(raw).parts
+                      if x not in ("", ".")
+                  ]
+                  if not parts:
+                      continue
+                  if ".." in parts:
+                      raise ValueError(f"Unsafe path: {raw}")
+
+                  mode = (info.external_attr >> 16) & 0xFFFF
+                  if stat.S_ISLNK(mode):
+                      raise ValueError(f"Symlink not allowed: {raw}")
+
+                  total += info.file_size
+                  if total > MAX_UNCOMPRESSED_BYTES:
+                      raise ValueError("Uncompressed content exceeds 100 MB")
+
+                  is_dir = info.is_dir()
+
+                  for part in parts:
+                      if part.lower() in BLOCKED_PARTS:
+                          raise ValueError(f"Blocked location: {raw}")
+
+                  if len(parts) == 1 and not is_dir:
+                      pass  # file in the repo root is allowed
+                  elif parts[0] not in ALLOWED_DIRS:
+                      raise ValueError(
+                          f"Folder not allowed: {parts[0]}/ ({raw})"
+                      )
+
+                  name = parts[-1].lower()
+                  if (not is_dir) and name.startswith(".env") \
+                          and name != ".env.example":
+                      raise ValueError(f"Secret/env file blocked: {raw}")
+
+                  key = "/".join(parts).lower()
+                  if key in seen:
+                      raise ValueError(f"Duplicate path in ZIP: {raw}")
+                  seen.add(key)
+
+                  target = (repo / Path(*parts)).resolve()
+                  if repo not in target.parents:
+                      raise ValueError(f"Path escapes repository: {raw}")
+
+                  existing = repo / Path(*parts)
+                  if existing.exists() and existing.is_dir() != is_dir:
+                      raise ValueError(f"File/folder conflict: {raw}")
+
+                  plan.append((info, parts, is_dir))
+
+              if not plan:
+                  raise ValueError("ZIP is empty")
+
+              return plan
+
+
+          def copy_limited(src, dst, budget):
+              """Copy, counting real bytes. Returns bytes copied."""
+              used = 0
+              while True:
+                  chunk = src.read(1024 * 1024)
+                  if not chunk:
+                      return used
+                  used += len(chunk)
+                  if used > budget:
+                      raise ValueError("Uncompressed content exceeds 100 MB")
+                  dst.write(chunk)
+
+
+          for zip_path in sorted(inbox.glob("*.zip")):
+              name = zip_path.stem
+              print(f"\n=== Processing {zip_path} ===")
+
+              try:
+                  if zip_path.stat().st_size > MAX_ZIP_BYTES:
+                      raise ValueError("ZIP exceeds the 50 MB limit")
+
+                  if not NAME_RE.fullmatch(name):
+                      raise ValueError(
+                          "ZIP filename contains unsupported characters"
+                      )
+
+                  with zipfile.ZipFile(zip_path) as zf:
+                      plan = validate(zf)
+
+                      # Stage everything outside the repo first.
+                      # Nothing touches the repo unless all of it extracts.
+                      with tempfile.TemporaryDirectory() as tmp:
+                          stage = Path(tmp)
+                          spent = 0
+
+                          for info, parts, is_dir in plan:
+                              dest = stage / Path(*parts)
+                              if is_dir:
+                                  dest.mkdir(parents=True, exist_ok=True)
+                                  continue
+                              dest.parent.mkdir(parents=True, exist_ok=True)
+                              with zf.open(info) as src, \
+                                      open(dest, "wb") as out:
+                                  spent += copy_limited(
+                                      src, out,
+                                      MAX_UNCOMPRESSED_BYTES - spent,
+                                  )
+
+                          added, updated = [], []
+
+                          for info, parts, is_dir in plan:
+                              rel = Path(*parts)
+                              if is_dir:
+                                  (repo / rel).mkdir(
+                                      parents=True, exist_ok=True
+                                  )
+                                  continue
+                              final = repo / rel
+                              existed = final.exists()
+                              final.parent.mkdir(parents=True, exist_ok=True)
+                              shutil.copyfile(stage / rel, final)
+                              (updated if existed else added).append(
+                                  rel.as_posix()
+                              )
+
+                  zip_path.unlink()
+                  imported.append(name)
+                  total_added += len(added)
+                  total_updated += len(updated)
+
+                  print(f"SUCCESS: {len(added)} added, {len(updated)} updated")
+                  for f in added:
+                      print(f"  + {f}")
+                  for f in updated:
+                      print(f"  ~ {f}")
+
+              except Exception as exc:
+                  print(f"FAILED: {exc}")
+                  rejected.append(name)
+
+                  failed.mkdir(exist_ok=True)
+                  failed_target = failed / zip_path.name
+                  if failed_target.exists():
+                      failed_target.unlink()
+                  if zip_path.exists():
+                      shutil.move(str(zip_path), str(failed_target))
+
+          parts_msg = []
+          if imported:
+              parts_msg.append(
+                  f"Import {', '.join(imported)} "
+                  f"({total_added} added, {total_updated} updated)"
+              )
+          if rejected:
+              parts_msg.append(f"Rejected {', '.join(rejected)}")
+          Path("/tmp/commit_msg.txt").write_text(
+              "; ".join(parts_msg) or "Process ZIP inbox"
+          )
+
+          print("\nZIP processing complete.")
+          PY
+
+      - name: Commit results
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -F /tmp/commit_msg.txt
+
+          git pull --rebase
+
+          git push
