@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ConfigError } from "@/lib/env";
 
 export function jsonOk<T>(data: T, status = 200, headers?: HeadersInit) {
   return NextResponse.json({ success: true, data }, { status, headers });
@@ -6,6 +7,18 @@ export function jsonOk<T>(data: T, status = 200, headers?: HeadersInit) {
 
 export function jsonError(status: number, code: string, message: string, headers?: HeadersInit) {
   return NextResponse.json({ success: false, error: { code, message } }, { status, headers });
+}
+
+/**
+ * Response for a server that is missing configuration. Production users get a generic message;
+ * in development the message names the missing variables (never their values) to speed up setup.
+ */
+export function configErrorResponse(error: ConfigError) {
+  const message =
+    process.env.NODE_ENV === "development"
+      ? error.message
+      : "The service is not available right now. Please try again later.";
+  return jsonError(503, "SERVER_NOT_CONFIGURED", message);
 }
 
 export function getClientIp(request: Request): string {

@@ -2,6 +2,20 @@
 
 All significant project changes are recorded here.
 
+## [0.1.1] - 2026-10-08 - Setup diagnostics fix
+
+### Fixed
+- Registration and login returned a bare "500" when Supabase settings were missing, and the terminal only printed "Error". Missing or invalid Supabase settings now return a clear 503 (`SERVER_NOT_CONFIGURED`). In development the message names the missing variables, never their values. In production users see a generic message.
+- Server errors are now logged with the real cause on one line, with passwords, tokens, keys and connection-string credentials removed (`lib/security/log.ts`). Failures to save the registration hint (service-role key) and to create the database profile are no longer silent.
+- Blank or whitespace-only variables are treated as missing; a Supabase URL that is not a URL is rejected.
+
+### Added
+- `docs/TROUBLESHOOTING.md`.
+- Tests for configuration errors, log redaction, setup-failure responses, and a repository check that fails if the same file exists in both `public/` and `app/`.
+
+### Known issue found in local testing (manual fix)
+- `public/icon.svg` duplicated `app/icon.svg`, which makes Next.js return 500 for `/icon.svg` in development. Delete `public/icon.svg` and keep `app/icon.svg`. This was missed in earlier verification because the production build and the smoke test never requested `/icon.svg`.
+
 ## [0.1.0] - 2026-10-05 - Phase 1: Foundation (PARTIALLY COMPLETE)
 
 ### Repository reconciliation

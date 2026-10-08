@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { logServerError } from "@/lib/security/log";
 import type { Prisma } from "@prisma/client";
 import { getClientIp } from "@/lib/security/http";
 
@@ -50,7 +51,7 @@ export async function writeAuditLog(input: AuditInput): Promise<void> {
         userAgent: input.request?.headers.get("user-agent")?.slice(0, 300),
       },
     });
-  } catch {
-    console.error(`[audit] could not record ${input.action}`);
+  } catch (error) {
+    logServerError(`audit: could not record ${input.action}`, error);
   }
 }

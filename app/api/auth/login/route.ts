@@ -5,7 +5,9 @@ import { loginSchema } from "@/lib/validation/auth";
 import { postLoginPath } from "@/lib/roles";
 import { loginIpLimiter, loginLimiter } from "@/lib/security/rate-limit";
 import { writeAuditLog } from "@/lib/security/audit";
-import { getClientIp, isSameOrigin, jsonError, jsonOk, readJson } from "@/lib/security/http";
+import { configErrorResponse, getClientIp, isSameOrigin, jsonError, jsonOk, readJson } from "@/lib/security/http";
+import { ConfigError } from "@/lib/env";
+import { logServerError } from "@/lib/security/log";
 
 const INVALID = "Invalid email or password.";
 
@@ -52,7 +54,8 @@ export async function POST(request: Request) {
 
     return jsonOk({ redirectTo: postLoginPath(appUser.role, next) });
   } catch (unexpected) {
-    console.error("[login] unexpected failure", unexpected instanceof Error ? unexpected.name : "unknown");
+    logServerError("login: unexpected failure", unexpected);
+    if (unexpected instanceof ConfigError) return configErrorResponse(unexpected);
     return jsonError(500, "SERVER_ERROR", "Something went wrong. Try again shortly.");
   }
 }

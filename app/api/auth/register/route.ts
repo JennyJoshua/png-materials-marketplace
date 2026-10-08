@@ -6,7 +6,9 @@ import { registerSchema, fieldErrors } from "@/lib/validation/auth";
 import { ROLE_HOME } from "@/lib/roles";
 import { registerLimiter } from "@/lib/security/rate-limit";
 import { writeAuditLog } from "@/lib/security/audit";
-import { getClientIp, getSiteUrl, isSameOrigin, jsonError, jsonOk, readJson } from "@/lib/security/http";
+import { configErrorResponse, getClientIp, getSiteUrl, isSameOrigin, jsonError, jsonOk, readJson } from "@/lib/security/http";
+import { ConfigError } from "@/lib/env";
+import { logServerError } from "@/lib/security/log";
 
 /**
  * Registration strategy (Option A - server-side profile creation):
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
       if (error.code === "weak_password") {
         return jsonError(400, "WEAK_PASSWORD", "Choose a stronger password.");
       }
-      console.error(`[register] supabase signUp failed: ${error.code ?? error.status ?? "unknown"}`);
+      logServerError("register: supabase signUp", error);
       return jsonError(400, "REGISTRATION_FAILED", "We could not create the account. Check your details and try again.");
     }
     const authUser = data.user;
@@ -79,9 +81,13 @@ export async function POST(request: Request) {
       const { error: metaError } = await admin.auth.admin.updateUserById(authUser.id, {
         app_metadata: { registration_type: input.accountType },
       });
-      if (metaError) hintSaved = false;
-    } catch {
+      if (metaError) {
+        hintSaved = false;
+        logServerError("register: could not save registration hint", metaError);
+      }
+    } catch (hintError) {
       hintSaved = false;
+      logServerError("register: could not save registration hint", hintError);
     }
 
     let profileCreated = true;
@@ -100,6 +106,7 @@ export async function POST(request: Request) {
       });
     } catch (profileError) {
       profileCreated = false;
+      logServerError("register: profile creation", profileError);
       await writeAuditLog({
         userId: null,
         action: "PROFILE_CREATE_FAILED",
@@ -125,7 +132,8 @@ export async function POST(request: Request) {
       201,
     );
   } catch (unexpected) {
-    console.error("[register] unexpected failure", unexpected instanceof Error ? unexpected.name : "unknown");
+    logServerError("register: unexpected failure", unexpected);
+    if (unexpected instanceof ConfigError) return configErrorResponse(unexpected);
     return jsonError(500, "SERVER_ERROR", "Something went wrong. Try again shortly.");
   }
 }
