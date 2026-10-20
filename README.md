@@ -1,28 +1,40 @@
-# PNG Materials Marketplace
+# PNG Marketplace
 
-A mobile-first web app (PWA-ready) that will connect customers with hardware stores and building-material suppliers in Papua New Guinea.
+(Repository name: `png-materials-marketplace`. The name is kept for now; a public brand can be decided separately.)
 
-**Current version:** 0.1.0, **Phase 1: Foundation**. This is an account and database foundation, not a working marketplace yet.
+A mobile-first web app (PWA-ready) that is planned to connect people and organisations across Papua New Guinea who want to buy goods or pay for services with the providers who can supply them.
+
+Building materials were the starting point and remain an important category. The project is now planned as a wider marketplace for goods **and** services. The scope was expanded on 2026-10-21; that change is documentation only.
+
+**Current version:** 0.1.0, **Phase 1: Foundation**. This is an account and database foundation, not a working marketplace yet. Nothing about products, services, quotations, orders or bookings is built.
 
 ## Who it serves
 
-- **Customers** (builders, households, contractors) who will find materials, compare supplier prices and request quotations.
-- **Suppliers** (hardware stores, wholesalers) who will list products, set their own prices and stock, and answer quotation requests.
-- **Administrators** who manage users, suppliers and categories.
+**Buyers** are individuals, households, businesses, schools, churches, government institutions, NGOs and other organisations that purchase goods or pay for services.
 
-The platform facilitates the transaction. Suppliers stay responsible for their products, prices, stock, quotations and fulfilment.
+**Providers** are of three types:
+
+- **Product businesses**: hardware stores, supermarkets, wholesalers, retailers, agricultural suppliers, clothing and electronics shops, and other sellers of physical goods.
+- **Individual service providers**: mechanics, electricians, plumbers, cleaners, carpenters, builders, gardeners, tutors, photographers, repairers and other professionals.
+- **Businesses offering goods and services**: for example an equipment supplier that also installs or repairs.
+
+**Administrators** manage users, providers, categories, listings, complaints and reports.
+
+The planned design uses **one account** for everyone: a person should not need separate accounts to buy and to provide. The platform facilitates transactions. It is not the seller of every product or the employer of every service provider. Providers control their own prices and availability. Online payments are deferred.
+
+Phase 1 still uses the original roles (Customer, Supplier, Admin). How the account model grows to cover buyers and providers of all three types is proposed in `docs/ARCHITECTURE.md` (Part C) and will be decided in Phase 2.
 
 ## Status at a glance
 
 | | |
 |---|---|
 | **Implemented (Phase 1)** | Customer and supplier registration; sign in and sign out; email-confirmation handling; three role dashboards (`/customer/dashboard`, `/supplier/dashboard`, `/admin/dashboard`) that show account details and a "coming later" notice; server-side role checks; five database tables with Row Level Security; category seed; audit-log foundation; basic rate limiting; security headers; tests |
-| **Planned (Phases 2 to 7)** | Supplier portal, customer marketplace, quotation requests (RFQs), quotations, orders, testing and deployment hardening |
-| **Future** | Online payments, delivery marketplace, AI material suggestions, price intelligence, multi-supplier checkout |
+| **Planned (Phases 2 to 6)** | General marketplace data model; product marketplace (listings, prices, search, comparison); services marketplace (service listings, areas, enquiries, bookings); quotations, orders and bookings, notifications, reviews and complaints; business development options |
+| **Future** | Online payments (after evaluation for Papua New Guinea), delivery marketplace, AI material suggestions, price intelligence, multi-supplier checkout, provider subscriptions and featured listings (options to evaluate) |
 
-Not implemented yet: product catalogue, product search, price comparison, projects, material lists, RFQs, quotations, orders, payments, delivery, AI features, a password-reset page, and an administrator screen beyond read-only account counts. Dashboard tiles for these are labelled "Not available yet" and are not links.
+Not implemented yet: product listings, service listings, search, price comparison, provider profiles beyond the Phase 1 supplier profile, enquiries, quotation requests (RFQs), quotations, orders, bookings, reviews, complaints, provider verification, payments, delivery, AI features, a password-reset page, and an administrator screen beyond read-only account counts. Dashboard tiles for these are labelled "Not available yet" and are not links.
 
-**Not yet verified in this repository:** the migration has not been applied to a Supabase database, the seed has not been run, and the app has not been deployed to Render. See `docs/REVIEW.md` for exactly what was and was not tested.
+**Verification status:** Phase 1 is recorded as PARTIALLY COMPLETE in `docs/REVIEW.md`. At the last review (2026-10-05) the Supabase migration, the category seed, a live Row Level Security check and the Render deployment were still outstanding. The full list is in `docs/ROADMAP.md`. Update `docs/REVIEW.md` as these are confirmed.
 
 ## Architecture
 
@@ -48,15 +60,14 @@ No microservices. See `docs/ARCHITECTURE.md` for the design and `docs/DECISIONS.
 
 ## Development phases
 
-1. **Foundation** (this phase)
-2. Supplier portal
-3. Customer marketplace
-4. RFQ engine
-5. Quotation engine
-6. Orders
-7. Testing and deployment
+1. **Foundation** (implemented; partially complete)
+2. General marketplace data model (design first)
+3. Product marketplace
+4. Services marketplace
+5. Transactions and trust
+6. Business development
 
-Each phase adds its own database tables and migration. Do not start a later phase without a separate specification.
+Phases are built one after another, not at the same time. Each phase needs its own specification, adds its own database tables and migration, and has its own tests. Do not start a later phase without a separate specification. Dependencies and exit criteria are in `docs/ROADMAP.md`.
 
 ## Local development
 
@@ -127,8 +138,9 @@ Render web service connected to this GitHub repository, using Supabase for Auth,
 
 | File | Contents |
 |---|---|
-| `docs/PROJECT_REQUIREMENTS.md` | Full MVP requirements (most of it planned) |
-| `docs/ARCHITECTURE.md` | Phase 1 architecture, plus planned design |
+| `docs/PROJECT_REQUIREMENTS.md` | Purpose, account model, planned functions and detailed requirements (most of it planned) |
+| `docs/ROADMAP.md` | Phases, dependencies, exit criteria and Phase 1 outstanding work |
+| `docs/ARCHITECTURE.md` | Phase 1 architecture (Part A), earlier planned design (Part B), proposed goods-and-services design (Part C) |
 | `docs/DATABASE.md` | Phase 1 tables, plus planned tables |
 | `docs/DECISIONS.md` | Architecture and product decisions |
 | `docs/SETUP_SUPABASE.md` | Manual Supabase steps, admin creation, RLS check |

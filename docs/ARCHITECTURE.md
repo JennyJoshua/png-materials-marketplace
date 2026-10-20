@@ -1,14 +1,18 @@
-PNG Materials Marketplace
+PNG Marketplace
+(repository: png-materials-marketplace)
 
 System Architecture
 
 Version: 0.1.0 (Phase 1 - Foundation)
-Last reconciled: 2026-10-05
+Last reconciled: 2026-10-21 (scope expansion; documentation only)
 
-This document has two parts.
+The project is planned as a general-purpose marketplace for goods and services in Papua New Guinea. Building materials remain an important first category. The technical architecture does not change.
 
-- Part A describes what is implemented and tested in Phase 1.
-- Part B keeps the earlier design for later phases (supplier portal, catalogue, RFQs, quotations, orders). It is planned design only. None of it exists yet.
+This document has three parts.
+
+- Part A describes what is implemented and tested in Phase 1. It is unchanged by the scope expansion.
+- Part B keeps the earlier design written for the building-materials marketplace (supplier portal, catalogue, RFQs, quotations, orders). It is planned design only. None of it exists yet.
+- Part C is new. It describes the proposed design for the expanded marketplace: accounts, provider profiles, products and services, trust, access control and low-bandwidth use. Part C is Proposed unless a statement says Approved. It is documentation only and does not authorise any code, schema or migration change.
 
 ---
 
@@ -168,6 +172,8 @@ Known gaps: no Content-Security-Policy header yet (add before production), no pa
 # Part B - Planned design for later phases (NOT implemented)
 
 Everything below is earlier design that later phases will build on. Where it mentions passwords, sessions or hosting, Part A overrides it. These sections describe modules, routes, state machines and rules that do not exist yet.
+
+Scope note: Part B was written for building materials only. Read "customer" as buyer and "supplier" as a provider who sells products. Where Part B and Part C differ on accounts, roles or provider concepts, Part C is the current proposal. The RFQ, quotation and order state machines in Part B remain the starting point for product transactions and will be extended for services.
 
 3. Application Modules
 
@@ -662,3 +668,183 @@ One application + one PostgreSQL database + one storage system.
 Only split services when there is a demonstrated technical requirement.
 
 This keeps development, deployment and maintenance manageable.
+
+---
+
+# Part C - Proposed architecture for the general goods-and-services marketplace
+
+Status: Proposed, except where marked Approved. Nothing here is implemented. No schema, migration, authentication or application code changes are made by this document.
+
+## C1. What stays the same
+
+Approved: the technical architecture is retained.
+
+| Concern | Choice |
+|---|---|
+| App | Next.js 15 (App Router), React, TypeScript |
+| Authentication | Supabase Auth |
+| Database | Supabase PostgreSQL |
+| ORM | Prisma |
+| Storage | Supabase Storage |
+| Hosting | Render |
+| Source control | GitHub |
+| Tests | Vitest |
+
+One Next.js application, no microservices, no paid services assumed. The repository keeps the name png-materials-marketplace for now; a public brand can be decided separately.
+
+## C2. Accounts, capabilities and roles
+
+Approved principle: one account system. A person does not need separate accounts to buy and to provide.
+
+### Concepts
+
+| Concept | What it is | Where it lives |
+|---|---|---|
+| User account | Identity, login, status | Supabase Auth plus the `users` row (Implemented) |
+| Buyer capability | May search, request quotations, book, buy | Every active user (Proposed) |
+| Provider profile | A shop, business or individual's public and business details | A new profile record owned by a user (Planned) |
+| Provider type | Product seller, service provider, or both | A field on the provider profile (Planned) |
+| Administrator | Platform management | `users.role = ADMIN` (Implemented) |
+
+### Phase 1 stays as it is (Approved)
+
+`users.role` (CUSTOMER, SUPPLIER, ADMIN) remains the authoritative role. The guards (`requirePageRole`, `requireApiAccess`), the identity-only middleware, the registration rules (no public ADMIN), the RLS setup, the five Phase 1 tables and the existing dashboard routes are not changed by the scope expansion.
+
+### The problem the future model must solve
+
+The current model gives each user one role. A plumber who also buys materials, or a hardware store that also offers installation, needs to act as buyer and provider at once, without a second account.
+
+### Options considered (Proposed)
+
+| Option | Idea | Assessment |
+|---|---|---|
+| A (recommended) | Keep `users.role` as the platform privilege. Derive provider capability from owning a provider profile, checked in the database on the server. | Simple, hard to spoof, fits the existing guards. Needs a decision on what happens to the SUPPLIER value. |
+| B | A `user_roles` table that gives a user several roles. | Flexible, but more moving parts, and a role claim must still be tied to a profile. Consider only if staff and team roles become necessary. |
+| C | Add combined enum values such as BUYER_AND_PROVIDER. | Rejected. It multiplies as capabilities grow. |
+
+### Recommended direction under Option A
+
+- Every active user is a buyer.
+- A user becomes a provider by creating a provider profile. Creating a profile does not raise their platform privilege.
+- Whether a provider is shown publicly depends on the profile's status, which only an administrator can change.
+- Each provider action loads the user's profile in the database and checks it belongs to them and is not suspended.
+- Each resource (listing, quotation, booking, order) is checked against the provider profile or the buyer who owns it, on every request.
+- ADMIN stays a platform-level privilege stored in the database and is never selectable at public registration.
+
+Server-side check order for any protected request: who is the user (`getUser()`); load the application user and status; is an admin action allowed; for provider actions, load the owned provider profile and check its status; check the resource owner. Never read a role or capability from `user_metadata` or from the request.
+
+### Decisions needed in Phase 2 (explicit approval required before implementing)
+
+- Whether to retire the SUPPLIER role value, keep it as a legacy marker, or migrate existing supplier accounts.
+- Whether one user may own one provider profile or several (for example an individual who also runs a business).
+- Whether a business needs staff accounts that act for it (not needed for the first release).
+- Whether `supplier_profiles` is generalised into a provider profile, or a new table is added alongside it.
+- Names and routes for the buyer and provider areas. The current routes (`/customer/*`, `/supplier/*`, `/admin/*`) stay until then.
+- Changes to the guards and to the audit actions.
+- How the existing registration choice (Customer or Supplier) is presented once providers can be of three types.
+
+### Risks to design against
+
+- A self-service provider profile must not become a path to higher privilege or to appearing verified.
+- A buyer-and-provider must not be able to act on a transaction as both sides (for example accepting their own quotation). The server must prevent it.
+
+## C3. Provider profiles
+
+Provider kinds: business, or individual. Provider types: product seller, service provider, or both. These are separate fields.
+
+Candidate fields (to be finalised in Phase 2): display name, kind, type, description, phone, email, address, province, district, town or area, service areas, optional business registration details, logo or photo, delivery and pickup availability for product sellers, working hours or availability for service providers, and status.
+
+Status and verification are separate. A profile can be active but not verified.
+
+Optional by design: website, business registration number, online payment details. Nothing here assumes a provider has them.
+
+## C4. Listings and prices
+
+Product listings and service listings are kept as different things (Proposed). They share ideas (category, provider, description, price information, last updated) but differ in what a buyer needs: stock and unit for a product, service area and availability for a service.
+
+| Price kind | Applies to | Set by | Notes |
+|---|---|---|---|
+| Catalogue price | Product listing | Provider | Shown with last-updated date. Not a guarantee of stock. |
+| Indicative rate | Service listing | Provider | A guide such as "from K__ per hour", not a promise. |
+| Quotation price | A specific request | Provider | Valid until a stated date. Kept separate from the catalogue price. |
+| Agreed price | Order or booking | Recorded at acceptance | Never changed by later price updates (extends DEC-009). |
+
+The platform never presents an estimated or AI-generated figure as a provider's price.
+
+## C5. Transaction flows
+
+The platform facilitates; it is neither seller nor employer. Initial payment is arranged directly between buyer and provider.
+
+Product flow: browse or search, compare supplier prices, enquire or request a quotation (RFQ), receive quotation, accept, order, status updates. This builds on the state machines in Part B.
+
+Service flow: search by category and location, view provider, send a service request, receive quotation or confirm the indicative rate, accept, booking, job completed, review.
+
+Candidate booking statuses (Proposed, to be finalised when bookings are designed): Requested, Quoted, Accepted, Scheduled, In progress, Completed, Cancelled, Disputed. Every transaction has an explicit status history, and important details (agreed price, scope, date) are preserved.
+
+Notifications: in-app and email first. SMS, push and WhatsApp are options to evaluate later.
+
+## C6. Search and location
+
+Start with PostgreSQL queries and indexes. Do not add an external search engine unless PostgreSQL proves insufficient (extends the guidance in Part B).
+
+- Products: name, brand, specification, category, provider, location, stock status, price range.
+- Services: category, location, service area, provider type, availability.
+- Location: province and district, plus a town or area name (Proposed). A finer local-level area is a Phase 2 decision.
+- Results must show the provider's last-updated date and verification status honestly.
+
+## C7. Trust, safety and moderation
+
+- Verification labels say exactly what was checked, and are used only after the defined check has been done (extends DEC-014).
+- Reviews tied to completed transactions, complaints, and administrator moderation and dispute handling (Phase 5).
+- Private contact details are revealed only under rules set during design.
+- Rate limiting and audit logging cover listings, enquiries, reviews and verification actions.
+- Administrators can suspend a listing or provider. Those actions are audit-logged.
+
+## C8. Access control and Row Level Security for future tables
+
+- Every new table is created in a reviewed migration with Row Level Security enabled and no permissive public policies, as in Phase 1 (extends DEC-024 and DEC-026).
+- Public pages read listings through server-side code. The public Supabase API is not used to read marketplace tables.
+- Access rules and RLS are reviewed in Phase 2 before any table is implemented, then re-checked on the live database after each migration.
+- Storage buckets and their access policies are designed in the phase that introduces uploads.
+
+## C9. Low bandwidth and device conditions
+
+- Server-rendered pages, small payloads, pagination, compressed images with size limits, no heavy external fonts or scripts.
+- Works on ordinary Android browsers; PWA features only where they help and do not complicate the app.
+- Simple forms with few required fields; easy price and availability updates.
+- Listings show when information was last updated.
+- Interface language: English first. Tok Pisin and Hiri Motu text is an option to consider later (not a decision).
+- Free and low-cost tiers of Supabase and Render have limits on database size, storage, email and sleeping services. Review capacity before a public launch.
+
+## C10. Storage
+
+Extends A10. Public listing images and logos may use a public-read bucket with writes only from server code. Identity and business verification documents use a private bucket read through short-lived signed URLs and are visible only to the owner and administrators. No buckets exist yet.
+
+## C11. Candidate data entities (design candidates, not a list of tables to create)
+
+| Entity | Purpose | Likely phase |
+|---|---|---|
+| Provider profile (business or individual) | Public and business details of a provider | 2 (design) |
+| Provider verification record | What was checked, by whom, when | 2 |
+| Locations (province, district) | Search and service areas | 2 |
+| Service categories | Organise services | 2 and 4 |
+| Product categories (exists) | Extended beyond building materials | 3 |
+| Product listings, provider prices, price history | Product marketplace | 3 |
+| Service listings, service areas, availability | Services marketplace | 4 |
+| Enquiries or conversations | Buyer and provider contact | 4 and 5 |
+| Quotations | Priced offers | 5 |
+| Orders and bookings | Agreed transactions with status history | 5 |
+| Reviews and complaints | Trust | 5 |
+| Notifications | Alerts | 5 |
+| Subscriptions, featured listings | Business development, if viable | 6 |
+
+Phase 1 already provides `users`, `customer_profiles`, `supplier_profiles`, `product_categories` and `audit_logs`. Future tables are introduced through reviewed migrations, each with access controls and RLS considered from the start.
+
+## C12. Open questions
+
+1. How should existing CUSTOMER and SUPPLIER accounts map onto the buyer and provider model?
+2. One provider profile per user, or several?
+3. Is there a business-with-staff requirement in the first release?
+4. What verification levels are practical to operate in Papua New Guinea?
+5. Which payment approaches are workable and legal, and when to evaluate them?
+6. How are disputes between buyer and provider handled in practice?

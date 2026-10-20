@@ -392,3 +392,182 @@ DEC-030 — Migration applied manually
 Decision
 
 The Phase 1 migration is generated but not applied. The project owner applies it with prisma migrate deploy once the Supabase project exists.
+
+---
+
+# Decisions added on 2026-10-21 (scope expansion: goods and services)
+
+Status key
+
+- Approved: decided by the project owner.
+- Proposed: a recommendation that has not been approved. It may change.
+
+These decisions change documentation only. No code, schema, migration, authentication logic, dependency or workflow is changed by them.
+
+---
+
+DEC-031 - Expand to a general goods-and-services marketplace
+
+Status: Approved
+
+Decision
+
+The platform connects people and organisations across Papua New Guinea who want to buy goods or pay for services with providers who can supply them. Building materials remain an important first category within a wider marketplace.
+
+Reason
+
+The same account, quotation, order and trust foundations serve products and services. Limiting the platform to building materials would leave out many local providers and buyers.
+
+---
+
+DEC-032 - Providers and buyers
+
+Status: Approved
+
+Decision
+
+Three provider types are supported: product businesses, individual service providers, and businesses offering both goods and services. Buyers include individuals, households, businesses, schools, churches, government institutions, NGOs and other organisations.
+
+---
+
+DEC-033 - One account system
+
+Status: Approved
+
+Decision
+
+The platform is built around a single account system. A person does not need separate accounts to buy and to provide. User account, buyer capability, provider profile, provider type and administrator are documented as separate concepts.
+
+---
+
+DEC-034 - users.role is unchanged in Phase 1
+
+Status: Approved
+
+Decision
+
+The existing users.role (CUSTOMER, SUPPLIER, ADMIN), the server-side guards, the identity-only middleware, the registration rules (no public ADMIN) and the Row Level Security setup are not changed by the scope expansion. Extends DEC-021 and DEC-022.
+
+Reason
+
+The Phase 1 authentication and role model is secure and must not be casually redesigned.
+
+---
+
+DEC-035 - Future capability model: derive provider capability from a provider profile
+
+Status: Proposed
+
+Decision
+
+Recommended for Phase 2: keep users.role as the platform privilege, treat every active user as a buyer, and derive provider capability from owning a provider profile that is looked up in the database on the server. Check resource ownership on every request. Never take a role or capability from the client or from user_metadata. See ARCHITECTURE.md Part C2 for the options and the decisions still needed (the fate of the SUPPLIER value, one or several profiles per user, staff accounts, and how supplier_profiles relates to a provider profile).
+
+Reason
+
+It supports users who are both buyers and providers without a second account, avoids a combinatorial list of roles, and keeps the existing server-side permission checks.
+
+Implementation requires explicit approval in a later phase.
+
+---
+
+DEC-036 - The platform facilitates; providers control prices
+
+Status: Approved
+
+Decision
+
+The platform is not the seller of every product and not the employer of every service provider. Providers control their own prices and availability. Extends DEC-004, DEC-005 and DEC-013.
+
+---
+
+DEC-037 - Kinds of price, and preserved agreed prices
+
+Status: Approved
+
+Decision
+
+Catalogue prices (products), indicative rates (services) and quotation-specific prices are kept distinct. Buyers can request quotations before committing. The agreed price and important transaction details are preserved on the order or booking. Extends DEC-008 and DEC-009. Estimated or AI-generated prices are never shown as provider prices.
+
+---
+
+DEC-038 - Verification
+
+Status: Approved (principle), Proposed (levels)
+
+Decision
+
+A provider is labelled verified only if the platform has actually completed the verification process defined for that label. Extends DEC-014.
+
+Proposed: separate verification levels, each labelled with exactly what was checked (for example contact details confirmed, identity or business documents checked), to be defined in Phase 2.
+
+---
+
+DEC-039 - Payments remain deferred
+
+Status: Approved
+
+Decision
+
+Online payment processing is deferred until a suitable approach has been evaluated for Papua New Guinea. Initially buyer and provider arrange payment directly and the platform records statuses. Possible payment methods (bank transfer, mobile money, card, other PNG-supported providers) are options to investigate, not confirmed integrations. Extends DEC-010.
+
+---
+
+DEC-040 - Revised roadmap
+
+Status: Approved
+
+Decision
+
+Phase 1 Foundation; Phase 2 General marketplace data model; Phase 3 Product marketplace; Phase 4 Services marketplace; Phase 5 Transactions and trust; Phase 6 Business development. Phases are built one after another, not simultaneously. See ROADMAP.md.
+
+---
+
+DEC-041 - Design before schema; each phase brings its own migrations
+
+Status: Approved
+
+Decision
+
+Database changes are designed and reviewed before they are implemented. Future changes arrive through reviewed migrations, with access control and Row Level Security considered from the start. Extends DEC-024 and DEC-026.
+
+---
+
+DEC-042 - Architecture and repository name unchanged
+
+Status: Approved
+
+Decision
+
+The technical architecture stays: Next.js 15, React, TypeScript, Supabase Auth, Supabase PostgreSQL, Prisma, Render, GitHub and Vitest. No paid services or paid APIs are assumed. The repository keeps the name png-materials-marketplace for now; a public brand can be decided separately.
+
+---
+
+DEC-043 - Conditions in Papua New Guinea are requirements
+
+Status: Approved (as requirements), Proposed (specific designs)
+
+Decision
+
+Low bandwidth, Android phones and ordinary browsers, varied digital literacy, urban and remote use, simple listing creation, quotation-based pricing, practical contact methods, and fraud, privacy and complaints handling are design requirements. No provider is assumed to have a website, a business registration, online payments or accurate stock records.
+
+Proposed: location by province and district plus a town or area name, with finer areas decided in Phase 2.
+
+---
+
+DEC-044 - Product listings and service listings are separate
+
+Status: Proposed
+
+Decision
+
+Product listings and service listings are modelled as different things that share common ideas (category, provider, description, price information, last-updated date), because buyers need different information for each.
+
+---
+
+DEC-045 - Business development options are not decisions
+
+Status: Approved (to defer), Proposed (options)
+
+Decision
+
+Optional provider subscriptions, featured listings, lead-generation fees, commissions and payment integrations are options to evaluate in Phase 6 once there is real use. None is decided.
