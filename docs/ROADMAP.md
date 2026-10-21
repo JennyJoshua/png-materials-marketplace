@@ -20,7 +20,7 @@ Status key: Implemented, Planned, Proposed (a recommendation awaiting approval).
 
 | Phase | Name | Status |
 |---|---|---|
-| 1 | Foundation | Implemented in the repository; recorded as PARTIALLY COMPLETE (see below) |
+| 1 | Foundation | Implemented in the repository; PARTIALLY COMPLETE (verified and outstanding items below) |
 | 2 | General marketplace data model | Planned. Not started |
 | 3 | Product marketplace | Planned. Not started |
 | 4 | Services marketplace | Planned. Not started |
@@ -57,22 +57,30 @@ Phase 6  business development
 
 ## Phase 1 - Foundation
 
-Status: Implemented in the repository; PARTIALLY COMPLETE per docs/REVIEW.md.
+Status: Implemented in the repository; **PARTIALLY COMPLETE** per docs/REVIEW.md. Phase 1 is not fully complete.
 
-What exists: Supabase Auth registration, login and logout for customers and suppliers; email-confirmation handling; three role dashboards; server-side role checks; five tables (users, customer_profiles, supplier_profiles, product_categories, audit_logs) with Row Level Security enabled and no policies; a category seed script; an audit-log foundation; in-memory rate limiting; security headers; automated tests. The implementation is preserved as it is.
+Implemented: Supabase Auth registration, login and logout for customers and suppliers; email-confirmation handling; three role dashboards; server-side role checks; five tables (users, customer_profiles, supplier_profiles, product_categories, audit_logs) with Row Level Security enabled and no policies; a category seed script; an audit-log foundation; in-memory rate limiting; security headers; automated tests. The implementation is preserved as it is.
 
-Outstanding validation and deployment work (from REVIEW.md; update that file as items are confirmed):
+Verified (live Supabase database, reported by the project owner on 2026-10-21; details in docs/REVIEW.md):
 
-1. Supabase project created and Authentication configured (email confirmation, minimum password length, Site URL and redirect URLs).
-2. Migration applied to Supabase with `prisma migrate deploy`. Status in the repository: generated, recorded as not applied.
-3. Category seed run.
-4. Row Level Security verified on the live database (SETUP_SUPABASE.md section 6).
-5. A live sign-up, email confirmation and sign-in test against Supabase.
-6. The first administrator created through the documented manual step.
-7. Render deployment and production redirect URLs.
-8. Open items noted in REVIEW.md: dependency audit follow-up, a Content-Security-Policy header, and a password-reset page (a deliberate deferral).
+1. The Phase 1 migration SQL was applied manually.
+2. The category seed ran successfully: exactly 15 product categories exist, all ACTIVE.
+3. RLS was enabled and checked on all five tables; no policies exist; table privileges were revoked from `anon` and `authenticated` (default-deny). This alone does not prove the complete application is secure.
+4. Supabase Auth: email and email confirmation enabled, anonymous sign-ins disabled. The application enforces a minimum password length of 10 characters.
 
-Exit criteria: items 1 to 7 confirmed and recorded in REVIEW.md, with the status updated. Phase 2 should not begin until the live sign-up flow has been proven at least once.
+Outstanding:
+
+1. **Prisma migration-history baseline.** The migration is not yet recorded in `_prisma_migrations`. Intended operation, once the checks in item 2 are done: `npx prisma migrate resolve --applied 20261005000000_phase1_foundation`. It records the migration; it does not run the SQL again.
+2. **Safe verification of Prisma connectivity and migration status** against the live database (read-only commands first; docs/SETUP_SUPABASE.md section 5).
+3. **Live sign-up, email-confirmation and sign-in testing.** Still requires confirmation.
+4. **Confirmation of Render deployment and production configuration.** The deployment status is unconfirmed: it is not recorded as completed, nor as definitively outstanding.
+5. Recommended follow-up after the baseline: check RLS and privileges on the `_prisma_migrations` table.
+
+Status not recorded either way: creation of the first administrator; Supabase Site URL and redirect URLs. Open items from the earlier review: dependency audit follow-up, a Content-Security-Policy header, and a password-reset page (a deliberate deferral).
+
+**Warning:** until the baseline is done, do not run `prisma migrate deploy`, `prisma migrate dev`, `prisma migrate reset` or `prisma db push` against the existing live database.
+
+Exit criteria: Outstanding items 1 to 4 confirmed and recorded in docs/REVIEW.md, with the Phase 1 status updated. Phase 2 should not begin until the baseline is done and the live sign-up flow has been proven at least once.
 
 ## Phase 2 - General marketplace data model
 
@@ -152,7 +160,7 @@ The earlier seven-phase plan was written for building materials only. This is ho
 | 2 Supplier Portal | Provider profiles in Phase 2; product management in Phase 3 |
 | 3 Customer Marketplace | Phase 3 (products) and Phase 4 (services) |
 | 4 RFQ Engine, 5 Quotation Engine, 6 Orders | Phase 5 |
-| 7 Testing and Deployment | Part of every phase's exit criteria; Render deployment is a Phase 1 outstanding item |
+| 7 Testing and Deployment | Part of every phase's exit criteria; Render deployment status is unconfirmed (Phase 1) |
 
 ## What this roadmap does not decide
 

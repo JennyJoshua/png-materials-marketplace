@@ -34,9 +34,13 @@ Tests: runnable without credentials.
 
 See docs/REVIEW.md for the full record and actual command results, docs/CHANGELOG.md for the change list, and docs/DECISIONS.md (DEC-017 to DEC-030) for the reasoning.
 
-## 5. Still to do before Phase 2
+## 5. Status before Phase 2 (updated 2026-10-21)
 
-The project owner must create the Supabase project, apply the migration, run the seed, test live sign-up and sign-in, create the first administrator, and (when ready) deploy to Render. Steps: docs/SETUP_SUPABASE.md and docs/SETUP_RENDER.md.
+Done on the live Supabase database (reported by the project owner): the migration SQL was applied manually; the category seed ran (15 ACTIVE categories); RLS was enabled and checked on all five tables (no policies, `anon`/`authenticated` privileges revoked).
+
+Still outstanding: the Prisma migration-history baseline (`npx prisma migrate resolve --applied 20261005000000_phase1_foundation`, only after safe checks); safe verification of Prisma connectivity and migration status; live sign-up, email-confirmation and sign-in testing; and confirmation of the Render deployment (status unconfirmed).
+
+Until the baseline is done, do not run `prisma migrate deploy`, `migrate dev`, `migrate reset` or `db push` against the existing live database. Steps: docs/SETUP_SUPABASE.md section 5 and docs/SETUP_RENDER.md. Phase 1 is PARTIALLY COMPLETE. Phase 2 has not started.
 
 ## 6. Do not implement yet
 

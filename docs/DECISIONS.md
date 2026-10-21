@@ -389,7 +389,9 @@ Password reset is Supabase Auth functionality. A reset UI is deferred to a later
 
 DEC-030 — Migration applied manually
 
-Decision
+Status: Superseded on 2026-10-21 by DEC-046. Kept as history. Do not follow the instruction below.
+
+Decision (historical)
 
 The Phase 1 migration is generated but not applied. The project owner applies it with prisma migrate deploy once the Supabase project exists.
 
@@ -571,3 +573,27 @@ Status: Approved (to defer), Proposed (options)
 Decision
 
 Optional provider subscriptions, featured listings, lead-generation fees, commissions and payment integrations are options to evaluate in Phase 6 once there is real use. None is decided.
+
+---
+
+# Decision added on 2026-10-21 (Phase 1 database status correction)
+
+---
+
+DEC-046 - Baseline Prisma's migration history before any migrate command
+
+Status: Approved
+
+Decision
+
+The Phase 1 migration SQL (20261005000000_phase1_foundation) was applied manually to the live Supabase database. It is not yet recorded in Prisma's _prisma_migrations history. Until that history is reconciled, prisma migrate deploy, prisma migrate dev, prisma migrate reset and prisma db push must not be run against the existing live database.
+
+Once the Prisma environment works and the live database has been safely checked (read-only commands first), the intended operation is:
+
+npx prisma migrate resolve --applied 20261005000000_phase1_foundation
+
+This records the migration as applied. It is not intended to run the migration SQL again. Afterwards, later migrations are applied with prisma migrate deploy, one reviewed migration at a time. Supersedes DEC-030. Extends DEC-026 and DEC-041.
+
+Reason
+
+Prisma cannot know about a migration applied by hand. Running migrate commands before the history is reconciled would fail on existing objects at best, and migrate dev, reset and db push can change or erase live data.

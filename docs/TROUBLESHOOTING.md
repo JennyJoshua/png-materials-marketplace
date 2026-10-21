@@ -12,7 +12,7 @@ The server cannot find your Supabase settings.
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase: Project Settings, API, the `anon` public key)
 3. **Stop the dev server (Ctrl+C) and run `npm run dev` again.** Next.js reads `.env` only when it starts.
 
-If you have not created the Supabase project yet, do `docs/SETUP_SUPABASE.md` sections 1 to 5 first.
+If you have not created the Supabase project yet, do `docs/SETUP_SUPABASE.md` sections 1 to 4 first, then read section 5 before touching the database.
 
 ## Terminal shows `AuthRetryableFetchError: fetch failed`
 
@@ -24,7 +24,7 @@ The account exists in Supabase but the database profile could not be saved. The 
 
 | Message contains | Meaning | Fix |
 |---|---|---|
-| `P2021` or "table ... does not exist" | The migration has not been applied | Run `npx prisma migrate deploy` |
+| `P2021` or "table ... does not exist" | The Phase 1 tables are not in the database you are connected to | Check that `DATABASE_URL` and `DIRECT_URL` point at the Supabase project where the migration was applied manually. **Do not run `prisma migrate deploy` against the existing live database**; read `docs/SETUP_SUPABASE.md` section 5 first |
 | `P1001`, "Can't reach database server" | Wrong `DATABASE_URL`, or the host is not reachable | Re-copy the connection string; if it has special characters in the password, URL-encode them; try the session-pooler string |
 | `P1000`, "Authentication failed" | Wrong database password | Reset it in Supabase and update `.env` |
 | `P1012` or "Environment variable not found" | `DATABASE_URL` or `DIRECT_URL` missing | Add both to `.env` and restart |

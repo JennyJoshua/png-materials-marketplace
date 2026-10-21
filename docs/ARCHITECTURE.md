@@ -148,7 +148,7 @@ A test fails the build if a client component imports Prisma or the admin client.
 
 ## A13. Deployment (Render)
 
-GitHub repository -> Render Web Service -> Next.js -> Supabase. Build command, start command, environment variables and the Supabase redirect URLs are in docs/SETUP_RENDER.md. **Deployment has not been performed.**
+GitHub repository -> Render Web Service -> Next.js -> Supabase. Build command, start command, environment variables and the Supabase redirect URLs are in docs/SETUP_RENDER.md. **Deployment status is unconfirmed in the available evidence** (see REVIEW.md).
 
 ## A14. Phase 1 routes and APIs
 

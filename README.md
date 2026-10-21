@@ -29,12 +29,14 @@ Phase 1 still uses the original roles (Customer, Supplier, Admin). How the accou
 | | |
 |---|---|
 | **Implemented (Phase 1)** | Customer and supplier registration; sign in and sign out; email-confirmation handling; three role dashboards (`/customer/dashboard`, `/supplier/dashboard`, `/admin/dashboard`) that show account details and a "coming later" notice; server-side role checks; five database tables with Row Level Security; category seed; audit-log foundation; basic rate limiting; security headers; tests |
+| **Verified (live Supabase, reported by the project owner 2026-10-21)** | The Phase 1 migration SQL was applied manually; the category seed ran (exactly 15 ACTIVE product categories); Row Level Security was enabled and checked on all five Phase 1 tables, with no policies and `anon`/`authenticated` privileges revoked (default-deny). Supabase Auth: email and email confirmation enabled, anonymous sign-ins disabled |
+| **Outstanding (Phase 1)** | Prisma migration-history baseline (the migration is not yet recorded in `_prisma_migrations`); safe verification of Prisma connectivity and migration status; live sign-up, email-confirmation and sign-in testing; confirmation of Render deployment and production configuration (deployment status is unconfirmed) |
 | **Planned (Phases 2 to 6)** | General marketplace data model; product marketplace (listings, prices, search, comparison); services marketplace (service listings, areas, enquiries, bookings); quotations, orders and bookings, notifications, reviews and complaints; business development options |
 | **Future** | Online payments (after evaluation for Papua New Guinea), delivery marketplace, AI material suggestions, price intelligence, multi-supplier checkout, provider subscriptions and featured listings (options to evaluate) |
 
 Not implemented yet: product listings, service listings, search, price comparison, provider profiles beyond the Phase 1 supplier profile, enquiries, quotation requests (RFQs), quotations, orders, bookings, reviews, complaints, provider verification, payments, delivery, AI features, a password-reset page, and an administrator screen beyond read-only account counts. Dashboard tiles for these are labelled "Not available yet" and are not links.
 
-**Verification status:** Phase 1 is recorded as PARTIALLY COMPLETE in `docs/REVIEW.md`. At the last review (2026-10-05) the Supabase migration, the category seed, a live Row Level Security check and the Render deployment were still outstanding. The full list is in `docs/ROADMAP.md`. Update `docs/REVIEW.md` as these are confirmed.
+**Verification status:** Phase 1 is **PARTIALLY COMPLETE**, not fully complete. The migration SQL was applied to the live Supabase database manually, but Prisma's migration history has not yet been baselined, and live sign-up, email confirmation and sign-in testing and the Render deployment still need confirmation. Default-deny RLS on the five tables does not on its own prove that the complete application is secure. The current position is in `docs/REVIEW.md` ("Current status") and `docs/ROADMAP.md`. Phase 2 has not started.
 
 ## Architecture
 
@@ -78,14 +80,18 @@ git clone https://github.com/JennyJoshua/png-materials-marketplace.git
 cd png-materials-marketplace
 npm install                 # also runs `prisma generate`
 cp .env.example .env        # then fill in the values (see "Environment variables")
-npx prisma migrate deploy   # apply the migration to your Supabase database
-npm run db:seed             # insert the 15 product categories (safe to repeat)
 npm run dev                 # http://localhost:3000
 ```
 
+### Database: read this before running any Prisma migrate command
+
+The Phase 1 migration SQL was **applied manually** to the live Supabase database, and the 15 product categories are already seeded. Prisma's migration history (`_prisma_migrations`) has **not** been baselined yet.
+
+**Do not run `npx prisma migrate deploy`, `migrate dev`, `migrate reset` or `db push` against the existing live database** until the history is reconciled. `migrate deploy` would try to run the migration SQL again and fail; the others can change or erase data. Follow the baseline procedure in `docs/SETUP_SUPABASE.md` section 5. Running the seed again is not needed.
+
 ### Supabase setup
 
-Create a Supabase project, collect the URL, keys and connection strings, configure email confirmation and redirect URLs, and create the first administrator by following **`docs/SETUP_SUPABASE.md`**. Administrators cannot register publicly.
+The live Supabase project already exists. For a new project, collect the URL, keys and connection strings, configure email confirmation and redirect URLs, and create the first administrator by following **`docs/SETUP_SUPABASE.md`**. Administrators cannot register publicly.
 
 ### Environment variables
 
@@ -94,7 +100,7 @@ Copy `.env.example` to `.env` and fill in the values. Names only are committed.
 | Variable | Notes |
 |---|---|
 | `DATABASE_URL` | Supabase transaction pooler (port 6543, `?pgbouncer=true`) |
-| `DIRECT_URL` | Direct (5432) or session-pooler string, for migrations |
+| `DIRECT_URL` | Direct (5432) or session-pooler string, for Prisma CLI and migration commands |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret**, server only |
@@ -106,9 +112,11 @@ Copy `.env.example` to `.env` and fill in the values. Names only are committed.
 |---|---|
 | `npm run db:validate` | Validate `prisma/schema.prisma` |
 | `npm run db:generate` | Generate the Prisma client |
-| `npm run db:migrate:deploy` | Apply committed migrations (use this against Supabase) |
-| `npm run db:migrate` | `prisma migrate dev` (development databases only) |
-| `npm run db:seed` | Seed the product categories |
+| `npm run db:migrate:deploy` | `prisma migrate deploy`. **Do not run against the existing live database** until the baseline is done. For empty databases and, after the baseline, for new reviewed migrations |
+| `npm run db:migrate` | `prisma migrate dev`. **Never against the live database** |
+| `npx prisma migrate status` | Read-only: shows what Prisma thinks is applied |
+| `npx prisma migrate resolve --applied 20261005000000_phase1_foundation` | The baseline. Run once, only after the checks in `docs/SETUP_SUPABASE.md` section 5. It records the migration; it does not run the SQL |
+| `npm run db:seed` | Seed the product categories (already done on the live database) |
 | `npm run db:studio` | Browse data locally |
 
 ### Tests, lint, type check, build
@@ -123,7 +131,7 @@ npm start           # run the production build
 
 ## Deployment target
 
-Render web service connected to this GitHub repository, using Supabase for Auth, PostgreSQL and Storage. Steps are in **`docs/SETUP_RENDER.md`**. Deployment has not been performed.
+Render web service connected to this GitHub repository, using Supabase for Auth, PostgreSQL and Storage. Steps are in **`docs/SETUP_RENDER.md`**. Deployment status is unconfirmed in the available evidence: this README does not record it as completed or as definitively outstanding.
 
 ## Security rules
 

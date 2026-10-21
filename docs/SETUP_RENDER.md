@@ -1,6 +1,6 @@
 # Render deployment guide
 
-**Deployment has not been performed.** This is the plan for when the project owner is ready.
+**Deployment status: unconfirmed in the available evidence.** This guide is the plan and checklist. Do not treat the service as deployed, or as not deployed, until the status is confirmed and recorded in docs/REVIEW.md.
 
 ```
 GitHub repository -> Render Web Service -> Next.js app -> Supabase (Auth, PostgreSQL, Storage)
@@ -8,7 +8,7 @@ GitHub repository -> Render Web Service -> Next.js app -> Supabase (Auth, Postgr
 
 ## 1. Prerequisites
 
-- The Supabase project exists and the migration is applied (docs/SETUP_SUPABASE.md).
+- The Supabase project exists and the Phase 1 migration was applied manually. Prisma's migration history is not yet baselined (docs/SETUP_SUPABASE.md section 5).
 - The code is pushed to GitHub (`JennyJoshua/png-materials-marketplace`, branch `main`).
 
 ## 2. Create the web service
@@ -49,7 +49,9 @@ Set these in the service's Environment settings (never in the repository):
 
 ## 4. Migrations
 
-Apply migrations deliberately, not on every start. For Phase 1, run `npx prisma migrate deploy` from your own computer against the Supabase `DIRECT_URL`. If Render's network cannot reach an IPv6-only direct host, use the session-pooler string.
+Do not add any migration command to the Render build command or start command.
+
+The Phase 1 migration was applied manually to the live database. **Do not run `prisma migrate deploy`, `migrate dev`, `migrate reset` or `db push` against it** until Prisma's migration history is baselined (docs/SETUP_SUPABASE.md section 5). After that, later migrations are applied deliberately, one reviewed migration at a time, from your own computer against the Supabase `DIRECT_URL`. If Render's network cannot reach an IPv6-only direct host, use the session-pooler string.
 
 ## 5. Supabase URL configuration for production
 

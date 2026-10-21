@@ -321,7 +321,7 @@ Additional requirements for the expanded marketplace (Planned):
 
 10.1 Product categories (seed script implemented in Phase 1)
 
-The seed script exists in the repository. It has not been recorded as run against a database (see REVIEW.md). The 15 building-materials categories are the initial seed: Cement & Concrete, Steel & Reinforcement, Timber, Roofing, Plumbing, Electrical, Paint, Building Boards, Doors & Windows, Fencing, Water & Tanks, Tools, Safety Equipment, General Hardware, Other.
+The seed script exists in the repository and ran successfully on the live Supabase database (reported 2026-10-21): exactly 15 product categories exist and all are ACTIVE (see REVIEW.md). The 15 building-materials categories are the initial seed: Cement & Concrete, Steel & Reinforcement, Timber, Roofing, Plumbing, Electrical, Paint, Building Boards, Doors & Windows, Fencing, Water & Tanks, Tools, Safety Equipment, General Hardware, Other.
 
 Categories for other goods (for example groceries, clothing, electronics, agriculture) are Planned for the product marketplace phase. Administrators manage categories.
 

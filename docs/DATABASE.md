@@ -57,21 +57,21 @@ Actions written in Phase 1: USER_REGISTERED, USER_LOGIN, USER_LOGIN_FAILED, USER
 
 ## A4. Row Level Security
 
-RLS is **enabled on all five tables**. No policies exist, so the Supabase REST API (anon / authenticated roles) can read and write nothing. Table privileges are also revoked from those roles. Prisma uses a privileged connection that bypasses RLS; application code enforces authorization (ARCHITECTURE.md A5, A7). Never add `USING (true)` policies.
+RLS is **enabled on all five tables**. No policies exist, so the Supabase REST API (anon / authenticated roles) can read and write nothing. Table privileges are also revoked from those roles. This was enabled and checked on the live Supabase database (reported by the project owner, 2026-10-21). It is a default-deny arrangement at the database; it does not on its own prove that the complete application is secure. Prisma uses a privileged connection that bypasses RLS; application code enforces authorization (ARCHITECTURE.md A5, A7). Never add `USING (true)` policies.
 
 ## A5. Migration strategy and status
 
 - Connections: `DATABASE_URL` (pooled, port 6543, `?pgbouncer=true`) for runtime; `DIRECT_URL` (direct 5432 or session pooler) for migrations. The direct host may be IPv6-only on the free tier.
 - One migration exists: `20261005000000_phase1_foundation`.
-- **Status: GENERATED BUT UNAPPLIED to Supabase.** No Supabase credentials were available. Apply with `npx prisma migrate deploy` (see SETUP_SUPABASE.md).
-- The migration SQL was written by hand because the Prisma schema engine could not be downloaded in the authoring environment, so `prisma migrate diff` was not used. It was instead applied to a real PostgreSQL 16 and compared against Prisma's data model. Details are in REVIEW.md. Before first use you can re-check with `prisma migrate diff` (command in the migration header).
+- **Status (2026-10-21): APPLIED MANUALLY to the live Supabase database; NOT yet recorded in Prisma's `_prisma_migrations` history.** The baseline is outstanding. Once the Prisma environment works and the live database has been safely checked, the intended operation is `npx prisma migrate resolve --applied 20261005000000_phase1_foundation`, which records the migration without running the SQL again. **Do not run `prisma migrate deploy`, `migrate dev`, `migrate reset` or `db push` against the existing live database before then.** Procedure: SETUP_SUPABASE.md section 5.
+- The migration SQL was written by hand because the Prisma schema engine could not be downloaded in the authoring environment, so `prisma migrate diff` was not used. It was instead applied to a real PostgreSQL 16 and compared against Prisma's data model. Details are in REVIEW.md (historical record). `prisma migrate diff` has still not been run against the migration.
 - Later phases add their own tables and migrations:
 
   products, supplier_products, price_history, projects, project_items, rfqs, rfq_items, rfq_suppliers, quotations, quotation_items, orders, order_items, notifications.
 
 ## A6. Seed
 
-`npm run db:seed` upserts the 15 categories by name (idempotent): Cement & Concrete, Steel & Reinforcement, Timber, Roofing, Plumbing, Electrical, Paint, Building Boards, Doors & Windows, Fencing, Water & Tanks, Tools, Safety Equipment, General Hardware, Other. It creates no users, suppliers, customers, passwords or admin accounts. **The seed has not been run** (no database was available).
+`npm run db:seed` upserts the 15 categories by name (idempotent): Cement & Concrete, Steel & Reinforcement, Timber, Roofing, Plumbing, Electrical, Paint, Building Boards, Doors & Windows, Fencing, Water & Tanks, Tools, Safety Equipment, General Hardware, Other. It creates no users, suppliers, customers, passwords or admin accounts. The seed **ran successfully** on the live Supabase database (reported 2026-10-21): exactly 15 product categories exist and all are ACTIVE. Running it again is not needed.
 
 ---
 

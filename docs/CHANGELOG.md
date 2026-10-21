@@ -2,6 +2,17 @@
 
 All significant project changes are recorded here.
 
+## [0.1.2] - 2026-10-21 - Phase 1 database status correction (documentation only)
+
+No application code, Prisma schema, migration SQL, seed code, database configuration, authentication logic or Supabase setting was changed, and no functionality was added. Phase 2 has not started.
+
+### Corrected
+- docs/REVIEW.md now opens with a current status (verified, outstanding, unconfirmed) and keeps the review of 2026-10-05 as a marked historical record.
+- Documentation no longer says the manual migration, the category seed or the RLS check are outstanding. As reported by the project owner on 2026-10-21: the Phase 1 migration SQL was applied manually to the live Supabase database; the seed ran (exactly 15 ACTIVE categories); RLS was enabled and checked on all five tables, with no policies and `anon`/`authenticated` privileges revoked.
+- Documentation now explains that Prisma's migration history has not been baselined (`_prisma_migrations`), and that Phase 1 is partially complete. Outstanding: the baseline, safe Prisma connectivity verification, live sign-up, email-confirmation and sign-in testing, and confirmation of the Render deployment (status unconfirmed).
+- Unsafe guidance removed: README, docs/SETUP_SUPABASE.md, docs/SETUP_RENDER.md, docs/TROUBLESHOOTING.md and docs/DATABASE.md told readers to run `prisma migrate deploy` against the database. They now warn against `migrate deploy`, `migrate dev`, `migrate reset` and `db push` on the existing live database until the baseline is done, and give a read-only checking procedure. A suggestion to use a scratch database URL as a Prisma shadow database was removed because it could wipe a database if pointed at the wrong one.
+- DEC-030 marked superseded; DEC-046 added. ROADMAP, ARCHITECTURE (A13), PROJECT_REQUIREMENTS (10.1) and the Phase 1 handover updated to match.
+
 ## [0.1.1] - 2026-10-08 - Setup diagnostics fix
 
 ### Fixed
@@ -39,7 +50,7 @@ All significant project changes are recorded here.
 - `users.id` is the Supabase Auth UUID; no password columns; no foreign key to the `auth` schema.
 - Row Level Security enabled on all five tables with no policies; table privileges revoked from `anon` and `authenticated`.
 - Category seed (15 categories, idempotent).
-- Migration status: **generated but unapplied** to Supabase.
+- Migration status on 2026-10-05: **generated but unapplied** to Supabase (historical; superseded, see [0.1.2]).
 
 ### Security foundation
 - Server-side role checks in every protected page and API route against the database role.
@@ -61,7 +72,7 @@ All significant project changes are recorded here.
 ### Validation results (run 2026-10-05)
 `npm install`, `prisma validate`, `prisma generate`, `npm run lint`, `npm run typecheck`, `npm test` (109 passed) and `npm run build` all exited 0. Prisma commands ran with stub engine binaries because the sandbox could not download Prisma's engines. See `docs/REVIEW.md` for exact details and what could not be verified.
 
-### Not done
+### Not done (as of 2026-10-05; historical, see [0.1.2] for the current position)
 Supabase project, migration application, seed run, live sign-up and sign-in test, Render deployment, password-reset page, Content-Security-Policy header.
 
 ## [0.1.0-planning] - Initial Foundation Planning
