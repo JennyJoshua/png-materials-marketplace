@@ -1,0 +1,65 @@
+name: Discord Workflow Notifications
+
+on:
+  workflow_run:
+    workflows: ["Process ZIP Inbox"]
+    types: [completed]
+
+permissions:
+  actions: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RESULT: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "Discord webhook secret is missing."
+            exit 1
+          fi
+
+          case "$RESULT" in
+            success)
+              STATUS="✅ SUCCESS"
+              ;;
+            failure)
+              STATUS="❌ FAILED"
+              ;;
+            cancelled)
+              STATUS="⚠️ CANCELLED"
+              ;;
+            *)
+              STATUS="⚠️ $RESULT"
+              ;;
+          esac
+
+          MESSAGE=$(jq -n \
+            --arg status "$STATUS" \
+            --arg repo "$REPOSITORY" \
+            --arg branch "$BRANCH" \
+            --arg url "$RUN_URL" \
+            '{
+              content: (
+                $status + " — GitHub Actions\n" +
+                "Repository: " + $repo + "\n" +
+                "Branch: " + $branch + "\n" +
+                "Run details: " + $url
+              )
+            }')
+
+          curl --fail-with-body --silent --show-error \
+            -H "Content-Type: application/json" \
+            -d "$MESSAGE" \
+            "$DISCORD_WEBHOOK_URL"
+
+          echo "Discord notification sent."
