@@ -16,5 +16,8 @@ export async function POST(request: Request) {
 
   // HTML form posts get a redirect; fetch() callers asking for JSON get JSON.
   if (request.headers.get("accept")?.includes("application/json")) return jsonOk({ signedOut: true });
-  return NextResponse.redirect(new URL("/login", request.url), 303);
+  // isSameOrigin() validates the Origin against the forwarded/host header above. Prefer that
+  // public origin because request.url can contain an internal proxy URL (for example localhost).
+  const redirectBase = request.headers.get("origin") ?? request.url;
+  return NextResponse.redirect(new URL("/login", redirectBase), 303);
 }
