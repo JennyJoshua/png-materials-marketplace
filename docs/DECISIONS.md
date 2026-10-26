@@ -597,3 +597,38 @@ This records the migration as applied. It is not intended to run the migration S
 Reason
 
 Prisma cannot know about a migration applied by hand. Running migrate commands before the history is reconciled would fail on existing objects at best, and migrate dev, reset and db push can change or erase live data.
+
+---
+
+# Decisions added on 2026-10-25 (Phase 1 stabilisation)
+
+Both decisions below are Proposed: they need the owner's approval.
+
+---
+
+DEC-047 - When the database fails after sign-in succeeds, end the session and answer 503
+
+Status: Proposed
+
+Decision
+
+If Supabase accepts a sign-in or an e-mail confirmation but the application then fails because of a database error, the application signs the user out of Supabase and answers with a clear 503 (`DATABASE_UNAVAILABLE`), or sends the user to `/login?error=unavailable` from the confirmation link. Protected API routes answer 503 JSON for database or configuration failures instead of a bare 500. Programming errors are not hidden. The cause goes to the server log with credentials removed; it is never sent to the browser. Implemented in the stabilisation ZIP, not deployed.
+
+Reason
+
+Before this, a database failure left a live Supabase session cookie behind a generic 500, and the confirmation callback and API routes had no handling at all.
+
+---
+
+DEC-048 - Treat `migration.sql` as frozen once it may be recorded
+
+Status: Proposed
+
+Decision
+
+Do not edit `prisma/migrations/20261005000000_phase1_foundation/migration.sql`, including its comments, until the live `_prisma_migrations` record has been read and its checksum compared with the file. Its stale status comment stays as a known contradiction; current status is recorded in the documentation. Extends DEC-046.
+
+Reason
+
+Prisma records a checksum of the migration file. If the live history already holds the checksum of the current file, any edit would make the repository differ from the record.
+

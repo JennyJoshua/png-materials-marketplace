@@ -2,7 +2,10 @@ import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
 import { getAuthUser, syncAppUser, type AppUser } from "@/lib/auth/session";
 import { ROLE_HOME, type Role } from "@/lib/roles";
-import { jsonError } from "@/lib/security/http";
+import { configErrorResponse, databaseUnavailableResponse, jsonError } from "@/lib/security/http";
+import { ConfigError } from "@/lib/env";
+import { isDatabaseError } from "@/lib/db/errors";
+import { logServerError } from "@/lib/security/log";
 
 export type AccessResult =
   | { ok: true; user: AppUser }
@@ -47,7 +50,22 @@ export async function requirePageRole(role: Role, currentPath: string): Promise<
 export async function requireApiAccess(
   allowedRoles?: readonly Role[],
 ): Promise<{ user: AppUser; response?: undefined } | { user?: undefined; response: NextResponse }> {
-  const access = await resolveAccess(allowedRoles);
+  let access: AccessResult;
+  try {
+    access = await resolveAccess(allowedRoles);
+  } catch (error) {
+    // Database or configuration trouble: answer with a safe 503 instead of a bare 500.
+    // Programming errors are NOT swallowed; they still surface.
+    if (error instanceof ConfigError) {
+      logServerError("api access: configuration", error);
+      return { response: configErrorResponse(error) };
+    }
+    if (isDatabaseError(error)) {
+      logServerError("api access: database", error);
+      return { response: databaseUnavailableResponse() };
+    }
+    throw error;
+  }
   if (access.ok) return { user: access.user };
   switch (access.reason) {
     case "unauthenticated":

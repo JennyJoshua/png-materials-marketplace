@@ -5,6 +5,7 @@ import { ensureProfile } from "@/lib/auth/profile";
 import { profileMetadataSchema } from "@/lib/validation/auth";
 import { isRegistrationRole, type Role } from "@/lib/roles";
 import { writeAuditLog } from "@/lib/security/audit";
+import { logServerError } from "@/lib/security/log";
 
 /** Safe-to-return application user. Never contains credentials or Supabase metadata. */
 export type AppUser = {
@@ -72,7 +73,8 @@ export async function recoverProfile(authUser: SupabaseUser): Promise<AppUser | 
       emailConfirmed: Boolean(authUser.email_confirmed_at),
       supplier,
     });
-  } catch {
+  } catch (error) {
+    logServerError("auth: profile recovery", error);
     return null;
   }
   await writeAuditLog({ userId: authUser.id, action: "PROFILE_RECOVERED", resourceType: "user", resourceId: authUser.id });

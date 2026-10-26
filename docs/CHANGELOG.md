@@ -2,6 +2,28 @@
 
 All significant project changes are recorded here.
 
+## [0.1.3] - 2026-10-25 - Phase 1 stabilisation pass (delivered for review, not deployed)
+
+Done without access to Render or Supabase. No production change was made and no migration command was run. Phase 1 remains PARTIALLY COMPLETE and Phase 2 has not started. Full evidence: docs/PHASE_1_VERIFICATION_REPORT.md.
+
+### Fixed
+- Login: if the database fails after Supabase has accepted the password, the session is now ended and the answer is 503 `DATABASE_UNAVAILABLE` (it was a generic 500 with a live session cookie left behind).
+- E-mail confirmation callback: database or configuration failures now end the session and redirect to `/login?error=unavailable` with a clear notice (it had no error handling).
+- Protected API routes (`/api/users/me`, `/api/admin/users`): database and configuration failures now give a safe 503 JSON answer instead of a bare 500.
+- Profile recovery failures are now logged (redacted) instead of being silent.
+
+### Added
+- `check-env.mjs`: checks `.env` the way Next.js reads it, and the structure of `DATABASE_URL` and `DIRECT_URL` (unencoded `/ ? #`, bad port, missing database name, a `#` cut by the `.env` loader) without printing any value.
+- `lib/db/errors.ts` (`isDatabaseError`), `docs/sql/phase1-readonly-checks.sql` (10 read-only SELECTs), `docs/PHASE_1_VERIFICATION_REPORT.md`, `handovers/PHASE_1_STABILISATION_RESULT.md`.
+- 38 automated tests (database failures, audit-log failures, recovery logging, the env checker). The behaviour tests were confirmed to fail on the old code.
+
+### Changed
+- Dependency patch update inside the existing ranges: `next` 15.5.25 to 15.5.28, `zod` 4.6.5 to 4.6.7, with lockfile updates for `sharp` and `source-map-js`. This addresses 1 critical and several high advisories reported by `npm audit` for production dependencies. Needs owner approval before it is merged, because merging deploys it.
+- Documentation: the Prisma migration-history status is now recorded as conflicting evidence to be reconciled (the 2026-10-21 report said not recorded; the 2026-10-24 handover reports a completed record). `migration.sql` was deliberately not edited (checksum). New guidance for checking and correcting the database URL, and a tested, unapplied proposal to harden `_prisma_migrations`.
+
+### Not done
+Anything that needs Render or Supabase access, the owner's decisions listed in the verification report, and the live acceptance test.
+
 ## [0.1.2] - 2026-10-21 - Phase 1 database status correction (documentation only)
 
 No application code, Prisma schema, migration SQL, seed code, database configuration, authentication logic or Supabase setting was changed, and no functionality was added. Phase 2 has not started.

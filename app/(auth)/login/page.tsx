@@ -12,6 +12,7 @@ const NOTICES: Record<string, string> = {
   suspended: "This account is suspended.",
   profile: "Your account setup is incomplete. Contact support.",
   callback: "That confirmation link is invalid or has expired. Register again or sign in.",
+  unavailable: "The service is temporarily unavailable. Please try again shortly.",
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {

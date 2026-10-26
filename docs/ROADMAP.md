@@ -30,7 +30,7 @@ Status key: Implemented, Planned, Proposed (a recommendation awaiting approval).
 ## Dependencies
 
 ```
-Phase 1 (validated)
+Phase 1 (validation in progress)
    |
    v
 Phase 2  data model and account approach
@@ -70,17 +70,19 @@ Verified (live Supabase database, reported by the project owner on 2026-10-21; d
 
 Outstanding:
 
-1. **Prisma migration-history baseline.** The migration is not yet recorded in `_prisma_migrations`. Intended operation, once the checks in item 2 are done: `npx prisma migrate resolve --applied 20261005000000_phase1_foundation`. It records the migration; it does not run the SQL again.
+1. **Prisma migration-history status: conflicting evidence.** The 2026-10-21 owner report said the migration is not recorded in `_prisma_migrations`; the 2026-10-24 handover reports one completed record. To reconcile: run the read-only `docs/sql/phase1-readonly-checks.sql` and use the decision table in docs/PHASE_1_VERIFICATION_REPORT.md section 5.4. If a matching record exists, no baseline is needed. Only if there is no record, with owner approval: `npx prisma migrate resolve --applied 20261005000000_phase1_foundation` (records the migration; does not run the SQL).
 2. **Safe verification of Prisma connectivity and migration status** against the live database (read-only commands first; docs/SETUP_SUPABASE.md section 5).
 3. **Live sign-up, email-confirmation and sign-in testing.** Still requires confirmation.
 4. **Confirmation of Render deployment and production configuration.** The deployment status is unconfirmed: it is not recorded as completed, nor as definitively outstanding.
-5. Recommended follow-up after the baseline: check RLS and privileges on the `_prisma_migrations` table.
+5. **`_prisma_migrations` exposure** (reported: RLS off, `anon`/`authenticated` SELECT): owner approval needed for the proposed fix (verification report section 6).
+6. **Database URL on Render:** a 2026-10-23 log showed "invalid port number in database URL"; current value to be checked with `node check-env.mjs`.
+7. **Owner decisions** on the dependency patch update and the other security findings (verification report sections 6 and 11).
 
 Status not recorded either way: creation of the first administrator; Supabase Site URL and redirect URLs. Open items from the earlier review: dependency audit follow-up, a Content-Security-Policy header, and a password-reset page (a deliberate deferral).
 
-**Warning:** until the baseline is done, do not run `prisma migrate deploy`, `prisma migrate dev`, `prisma migrate reset` or `prisma db push` against the existing live database.
+**Warning:** do not run `prisma migrate deploy`, `prisma migrate dev`, `prisma migrate reset` or `prisma db push` against the existing live database until the history is reconciled and the owner has approved the exact operation.
 
-Exit criteria: Outstanding items 1 to 4 confirmed and recorded in docs/REVIEW.md, with the Phase 1 status updated. Phase 2 should not begin until the baseline is done and the live sign-up flow has been proven at least once.
+Exit criteria: Outstanding items 1 to 6 resolved or explicitly accepted by the owner, and recorded in docs/REVIEW.md with the Phase 1 status updated. Phase 2 should not begin until the migration history is reconciled and the live sign-up flow has been proven at least once.
 
 ## Phase 2 - General marketplace data model
 

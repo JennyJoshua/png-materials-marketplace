@@ -5,8 +5,9 @@ import { loginSchema } from "@/lib/validation/auth";
 import { postLoginPath } from "@/lib/roles";
 import { loginIpLimiter, loginLimiter } from "@/lib/security/rate-limit";
 import { writeAuditLog } from "@/lib/security/audit";
-import { configErrorResponse, getClientIp, isSameOrigin, jsonError, jsonOk, readJson } from "@/lib/security/http";
+import { configErrorResponse, databaseUnavailableResponse, getClientIp, isSameOrigin, jsonError, jsonOk, readJson } from "@/lib/security/http";
 import { ConfigError } from "@/lib/env";
+import { isDatabaseError } from "@/lib/db/errors";
 import { logServerError } from "@/lib/security/log";
 
 const INVALID = "Invalid email or password.";
@@ -26,8 +27,10 @@ export async function POST(request: Request) {
     return jsonError(429, "RATE_LIMITED", "Too many sign-in attempts. Try again later.", { "Retry-After": String(retry) });
   }
 
+  let supabase: Awaited<ReturnType<typeof createSupabaseServerClient>> | undefined;
+  let signedIn = false;
   try {
-    const supabase = await createSupabaseServerClient();
+    supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error || !data.user) {
@@ -39,6 +42,7 @@ export async function POST(request: Request) {
       return jsonError(401, "INVALID_CREDENTIALS", INVALID);
     }
 
+    signedIn = true; // from here on a failure must also end the Supabase session
     const appUser = await syncAppUser(data.user);
     if (!appUser) {
       await supabase.auth.signOut();
@@ -55,7 +59,17 @@ export async function POST(request: Request) {
     return jsonOk({ redirectTo: postLoginPath(appUser.role, next) });
   } catch (unexpected) {
     logServerError("login: unexpected failure", unexpected);
+    // Supabase accepted the password but the application could not finish (for example the database
+    // is unreachable). End the session so the user is not left half signed in.
+    if (signedIn && supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        // best effort: the failure above is what gets reported
+      }
+    }
     if (unexpected instanceof ConfigError) return configErrorResponse(unexpected);
+    if (isDatabaseError(unexpected)) return databaseUnavailableResponse();
     return jsonError(500, "SERVER_ERROR", "Something went wrong. Try again shortly.");
   }
 }

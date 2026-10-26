@@ -45,7 +45,26 @@ Set these in the service's Environment settings (never in the repository):
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret.** Server only |
 | `NEXT_PUBLIC_SITE_URL` | Your production URL, for example `https://your-service.onrender.com` |
 
-`NEXT_PUBLIC_*` values are baked in at build time. If you change them, trigger a new deploy.
+`NEXT_PUBLIC_*` values are baked in at build time. If you change them, trigger a new deploy. `DATABASE_URL` is read when the server runs.
+
+### Checking `DATABASE_URL` without revealing it
+
+A Render log on 2026-10-23 showed "The provided database string is invalid ... invalid port number in database URL" and the cause was not established. To check the current value's structure:
+
+1. On your own computer, open the Render dashboard, Environment, and copy the `DATABASE_URL` and `DIRECT_URL` values into your **local** `.env` (never into chat, an issue, a commit or a screenshot).
+2. Run `node check-env.mjs`. It never connects and never prints the values. It reports problems such as an unencoded `/`, `?` or `#` in the password, a non-numeric port, or a missing database name.
+3. If it reports nothing, the URL is well formed. The problem is then elsewhere (for example a wrong password or an unreachable host).
+
+### Correcting a bad value (needs the owner's approval)
+
+Nothing here has been changed. If the checker finds a problem, the simplest safe correction is:
+
+1. In Supabase, reset the database password to one made of letters and digits only (no special characters), so no URL-encoding is ever needed. This invalidates the old password for every client, including the live service, so do steps 2 and 3 straight away, at a quiet time.
+2. Copy the fresh connection strings from Supabase (Connect). Replace the password placeholder. Keep `?pgbouncer=true` on the transaction-pooler string (port 6543) used as `DATABASE_URL`.
+3. Paste the new values into Render's `DATABASE_URL` and `DIRECT_URL` fields and save. Render restarts the service. Update your local `.env` too.
+4. Run `node check-env.mjs` locally, then watch the Render logs for database errors.
+
+If you keep the existing password instead, URL-encode its special characters (`/` = `%2F`, `?` = `%3F`, `#` = `%23`, `@` = `%40`, `:` = `%3A`).
 
 ## 4. Migrations
 

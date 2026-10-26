@@ -30,13 +30,13 @@ Phase 1 still uses the original roles (Customer, Supplier, Admin). How the accou
 |---|---|
 | **Implemented (Phase 1)** | Customer and supplier registration; sign in and sign out; email-confirmation handling; three role dashboards (`/customer/dashboard`, `/supplier/dashboard`, `/admin/dashboard`) that show account details and a "coming later" notice; server-side role checks; five database tables with Row Level Security; category seed; audit-log foundation; basic rate limiting; security headers; tests |
 | **Verified (live Supabase, reported by the project owner 2026-10-21)** | The Phase 1 migration SQL was applied manually; the category seed ran (exactly 15 ACTIVE product categories); Row Level Security was enabled and checked on all five Phase 1 tables, with no policies and `anon`/`authenticated` privileges revoked (default-deny). Supabase Auth: email and email confirmation enabled, anonymous sign-ins disabled |
-| **Outstanding (Phase 1)** | Prisma migration-history baseline (the migration is not yet recorded in `_prisma_migrations`); safe verification of Prisma connectivity and migration status; live sign-up, email-confirmation and sign-in testing; confirmation of Render deployment and production configuration (deployment status is unconfirmed) |
+| **Outstanding (Phase 1)** | Reconcile Prisma's migration history (evidence conflicts: the 2026-10-21 report said the migration was not recorded; the 2026-10-24 handover reports a completed record; a read-only check is prepared in `docs/sql/phase1-readonly-checks.sql`); safe verification of Prisma connectivity; live sign-up, email-confirmation and sign-in testing; confirmation of Render deployment and production configuration (status unconfirmed); owner decisions on security findings (`docs/PHASE_1_VERIFICATION_REPORT.md`) |
 | **Planned (Phases 2 to 6)** | General marketplace data model; product marketplace (listings, prices, search, comparison); services marketplace (service listings, areas, enquiries, bookings); quotations, orders and bookings, notifications, reviews and complaints; business development options |
 | **Future** | Online payments (after evaluation for Papua New Guinea), delivery marketplace, AI material suggestions, price intelligence, multi-supplier checkout, provider subscriptions and featured listings (options to evaluate) |
 
 Not implemented yet: product listings, service listings, search, price comparison, provider profiles beyond the Phase 1 supplier profile, enquiries, quotation requests (RFQs), quotations, orders, bookings, reviews, complaints, provider verification, payments, delivery, AI features, a password-reset page, and an administrator screen beyond read-only account counts. Dashboard tiles for these are labelled "Not available yet" and are not links.
 
-**Verification status:** Phase 1 is **PARTIALLY COMPLETE**, not fully complete. The migration SQL was applied to the live Supabase database manually, but Prisma's migration history has not yet been baselined, and live sign-up, email confirmation and sign-in testing and the Render deployment still need confirmation. Default-deny RLS on the five tables does not on its own prove that the complete application is secure. The current position is in `docs/REVIEW.md` ("Current status") and `docs/ROADMAP.md`. Phase 2 has not started.
+**Verification status:** Phase 1 is **PARTIALLY COMPLETE**, not fully complete. The migration SQL was applied to the live Supabase database manually. Whether Prisma's migration history records it is **under reconciliation** because two reports conflict. Live sign-up, email confirmation and sign-in testing and the Render deployment still need confirmation, and a database-URL error seen in a Render log on 2026-10-23 has no established cause. Default-deny RLS on the five tables does not on its own prove that the complete application is secure. The current position is in `docs/REVIEW.md` ("Current status"), `docs/PHASE_1_VERIFICATION_REPORT.md` and `docs/ROADMAP.md`. Phase 2 has not started.
 
 ## Architecture
 
@@ -81,11 +81,12 @@ cd png-materials-marketplace
 npm install                 # also runs `prisma generate`
 cp .env.example .env        # then fill in the values (see "Environment variables")
 npm run dev                 # http://localhost:3000
+node check-env.mjs          # checks .env (names, lengths, database-URL structure); never prints secrets
 ```
 
 ### Database: read this before running any Prisma migrate command
 
-The Phase 1 migration SQL was **applied manually** to the live Supabase database, and the 15 product categories are already seeded. Prisma's migration history (`_prisma_migrations`) has **not** been baselined yet.
+The Phase 1 migration SQL was **applied manually** to the live Supabase database, and the 15 product categories are already seeded. Whether Prisma's migration history (`_prisma_migrations`) already records it is **under reconciliation**: do not assume either way. Run the read-only checks in `docs/sql/phase1-readonly-checks.sql` and follow `docs/PHASE_1_VERIFICATION_REPORT.md` section 5.4. Do not edit `migration.sql`, even its comments: its checksum may already be recorded.
 
 **Do not run `npx prisma migrate deploy`, `migrate dev`, `migrate reset` or `db push` against the existing live database** until the history is reconciled. `migrate deploy` would try to run the migration SQL again and fail; the others can change or erase data. Follow the baseline procedure in `docs/SETUP_SUPABASE.md` section 5. Running the seed again is not needed.
 
@@ -115,7 +116,7 @@ Copy `.env.example` to `.env` and fill in the values. Names only are committed.
 | `npm run db:migrate:deploy` | `prisma migrate deploy`. **Do not run against the existing live database** until the baseline is done. For empty databases and, after the baseline, for new reviewed migrations |
 | `npm run db:migrate` | `prisma migrate dev`. **Never against the live database** |
 | `npx prisma migrate status` | Read-only: shows what Prisma thinks is applied |
-| `npx prisma migrate resolve --applied 20261005000000_phase1_foundation` | The baseline. Run once, only after the checks in `docs/SETUP_SUPABASE.md` section 5. It records the migration; it does not run the SQL |
+| `npx prisma migrate resolve --applied 20261005000000_phase1_foundation` | **Only if** the read-only check shows Prisma has no record of the migration, and only with the owner's approval. It records the migration; it does not run the SQL. If a matching record already exists, do not run it |
 | `npm run db:seed` | Seed the product categories (already done on the live database) |
 | `npm run db:studio` | Browse data locally |
 

@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 Phase: Phase 1 (Foundation)
-Status last updated: 2026-10-21 (documentation correction only)
+Status last updated: 2026-10-25 (stabilisation pass; see docs/PHASE_1_VERIFICATION_REPORT.md)
 
 **Phase 1 status: PARTIALLY COMPLETE**
 
@@ -10,9 +10,18 @@ This file has two parts. **Current status** is the latest position. **Historical
 
 ---
 
-# Current status (2026-10-21)
+# Current status (updated 2026-10-25)
 
-Evidence note: the items marked VERIFIED were checked on the live Supabase database by the project owner and reported on 2026-10-21. They were not produced by this repository's automated tests, and no check output is stored in this repository. Items marked OUTSTANDING or UNCONFIRMED must not be read as done.
+Evidence note: the items marked VERIFIED were checked on the live Supabase database by the project owner and reported on 2026-10-21. They were not produced by this repository's automated tests, and no check output is stored in this repository. Items marked OUTSTANDING or UNCONFIRMED must not be read as done. Observations quoted from the 2026-10-24 handover are marked "reported" and have not been verified by anyone who wrote this file.
+
+## Update 2026-10-25 (stabilisation pass)
+
+The 2026-10-24 handover (`handovers/PHASE_1_COMPLETION_AND_STABILISATION.md`) was executed **without access to Render or Supabase**. Details, evidence tags and test results are in `docs/PHASE_1_VERIFICATION_REPORT.md`.
+
+- **New conflicting evidence, not resolved:** the handover reports that the live `_prisma_migrations` table already holds one completed record for the migration. That conflicts with the 2026-10-21 report below that it is not recorded. See Outstanding item 1.
+- **Code changes, not deployed:** safer behaviour when the database fails after Supabase sign-in succeeds (login, e-mail confirmation callback, protected APIs), logging of profile-recovery failures, a patch-level dependency update, and an environment checker. 38 new automated tests. They are in a ZIP for owner review and have not been merged.
+- **No production change was made.** No migration command was run. `migration.sql` was deliberately **not** edited, because its checksum may already be recorded.
+- Phase 1 remains **PARTIALLY COMPLETE**. Phase 2 has not started.
 
 ## Completed and verified
 
@@ -27,34 +36,37 @@ What items 4 and 5 do not prove: default-deny RLS stops the public Supabase API 
 
 ## Outstanding
 
-1. **Prisma migration-history baseline.** The migration was applied manually, so it is **not yet recorded** in Prisma's `_prisma_migrations` history. The intended operation, to be run once and only after Outstanding item 2 below is done, is:
+1. **Prisma migration-history status: conflicting evidence, to be reconciled.** The owner reported on 2026-10-21 that the migration is not recorded in `_prisma_migrations`. The 2026-10-24 handover reports one completed, non-rolled-back record. Run the read-only checks in `docs/sql/phase1-readonly-checks.sql` (Result 1) and use the decision table in docs/PHASE_1_VERIFICATION_REPORT.md section 5.4. If a record exists and its checksum matches the repository file, **no baseline is needed**. **Only if the check shows no record**, the intended operation (owner approval first, after the read-only checks) is:
 
    ```
    npx prisma migrate resolve --applied 20261005000000_phase1_foundation
    ```
 
-   This records the existing migration as applied. It is not intended to run the migration SQL again.
+   It records the existing migration as applied. It is not intended to run the migration SQL again.
 2. **Safe verification of Prisma connectivity and migration status** against the live database, using read-only commands first (procedure in docs/SETUP_SUPABASE.md section 5).
-3. **Live sign-up, email-confirmation and sign-in testing.** These still require confirmation.
+3. **Live sign-up, email-confirmation and sign-in testing.** These still require confirmation. A proposed test is in the verification report section 9.
 4. **Confirmation of Render deployment and production configuration.**
-5. Follow-up after the baseline (recommended): the baseline creates a `_prisma_migrations` table in the `public` schema. Check that table's RLS state and privileges too, and apply the same default-deny rules (docs/SETUP_SUPABASE.md section 5).
+5. **`public._prisma_migrations` exposure (reported, not verified):** RLS disabled and `anon`/`authenticated` SELECT. A tested fix and rollback are in the verification report section 6. Needs owner approval; not applied.
+6. **The database URL on Render.** A 2026-10-23 log showed "invalid port number in database URL" with no established cause. Check the current value's structure locally with `node check-env.mjs` (docs/SETUP_RENDER.md section 3). Not changed.
+7. **Owner decisions on the other findings:** the dependency patch update, `X-Forwarded-For` trust, session cookies, a CSP header, leaked-password protection (verification report sections 6 and 11).
 
 ## Unconfirmed in the available evidence
 
 - **Render deployment:** its status is unconfirmed. It is not recorded here as completed, and not recorded as definitively outstanding. The evidence available for this update does not settle it.
+- Whether the live `_prisma_migrations` record exists and matches the repository file; whether Render's `DATABASE_URL` is currently valid; the live behaviour of registration, confirmation and sign-in.
 - Not recorded either way: creation of the first administrator, Supabase Site URL and redirect URL configuration, the Supabase-side minimum password length setting.
 - Known open items from the earlier review that are unchanged: dependency audit follow-up, a Content-Security-Policy header, and a password-reset page (a deliberate deferral).
 
 ## Warning: do not rerun the migration on the live database
 
-Until the Prisma migration history has been reconciled (Outstanding item 1), **do not run any of these against the existing live database**:
+Until the Prisma migration history has been reconciled (Outstanding item 1) **and the owner has approved the exact operation**, do not run any of these against the existing live database:
 
 - `prisma migrate deploy`
 - `prisma migrate dev`
 - `prisma migrate reset`
 - `prisma db push`
 
-Prisma has no record that the migration was applied, so `migrate deploy` would try to run the migration SQL again and fail because the objects already exist. `migrate dev`, `migrate reset` and `db push` can change or erase live data. Never use the live database URL as a shadow database.
+If Prisma's history does not record the migration, `migrate deploy` would try to run the migration SQL again and fail because the objects already exist. `migrate dev`, `migrate reset` and `db push` can change or erase live data. Never use the live database URL as a shadow database.
 
 ## Phase 2
 

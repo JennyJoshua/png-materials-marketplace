@@ -34,13 +34,13 @@ Tests: runnable without credentials.
 
 See docs/REVIEW.md for the full record and actual command results, docs/CHANGELOG.md for the change list, and docs/DECISIONS.md (DEC-017 to DEC-030) for the reasoning.
 
-## 5. Status before Phase 2 (updated 2026-10-21)
+## 5. Status before Phase 2 (updated 2026-10-25)
 
-Done on the live Supabase database (reported by the project owner): the migration SQL was applied manually; the category seed ran (15 ACTIVE categories); RLS was enabled and checked on all five tables (no policies, `anon`/`authenticated` privileges revoked).
+Reported on the live Supabase database (owner, 2026-10-21; handover, 2026-10-24): the migration SQL was applied manually; the category seed ran (15 ACTIVE categories); RLS is enabled on all five tables (no policies, `anon`/`authenticated` privileges revoked).
 
-Still outstanding: the Prisma migration-history baseline (`npx prisma migrate resolve --applied 20261005000000_phase1_foundation`, only after safe checks); safe verification of Prisma connectivity and migration status; live sign-up, email-confirmation and sign-in testing; and confirmation of the Render deployment (status unconfirmed).
+Unresolved: whether Prisma's `_prisma_migrations` already records the migration (the two reports conflict; read-only check in `docs/sql/phase1-readonly-checks.sql`); live sign-up, email-confirmation and sign-in testing; Render deployment status and the current `DATABASE_URL`; owner decisions on security findings. See `docs/PHASE_1_VERIFICATION_REPORT.md`.
 
-Until the baseline is done, do not run `prisma migrate deploy`, `migrate dev`, `migrate reset` or `db push` against the existing live database. Steps: docs/SETUP_SUPABASE.md section 5 and docs/SETUP_RENDER.md. Phase 1 is PARTIALLY COMPLETE. Phase 2 has not started.
+Do not run `prisma migrate deploy`, `migrate dev`, `migrate reset` or `db push` against the existing live database without the owner's approval of the exact operation, and do not edit `migration.sql`. Phase 1 is PARTIALLY COMPLETE. Phase 2 has not started.
 
 ## 6. Do not implement yet
 

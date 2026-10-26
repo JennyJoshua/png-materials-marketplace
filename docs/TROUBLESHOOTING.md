@@ -4,6 +4,8 @@ Server messages appear in the **command prompt window where `npm run dev` is run
 
 ## Registration shows "Supabase is not configured" (HTTP 503)
 
+(`node check-env.mjs` checks your `.env` the way Next.js reads it and never prints secrets. It also checks the structure of the two database URLs.)
+
 The server cannot find your Supabase settings.
 
 1. The file must be named exactly `.env` and sit in the project root, next to `package.json`.
@@ -28,8 +30,13 @@ The account exists in Supabase but the database profile could not be saved. The 
 | `P1001`, "Can't reach database server" | Wrong `DATABASE_URL`, or the host is not reachable | Re-copy the connection string; if it has special characters in the password, URL-encode them; try the session-pooler string |
 | `P1000`, "Authentication failed" | Wrong database password | Reset it in Supabase and update `.env` |
 | `P1012` or "Environment variable not found" | `DATABASE_URL` or `DIRECT_URL` missing | Add both to `.env` and restart |
+| "The provided database string is invalid" / "invalid port number in database URL" | `DATABASE_URL` is not a valid URL. Common causes: a `/`, `?` or `#` in the password that is not URL-encoded, a non-numeric port, a stray space or quote. In a `.env` file an unquoted `#` also starts a comment and cuts the value short | Run `node check-env.mjs` (it names the problem without printing the value). Correct the value (`/` = `%2F`, `?` = `%3F`, `#` = `%23`, `@` = `%40`). For the live service see `docs/SETUP_RENDER.md` section 3 (needs the owner's approval) |
 
 After fixing, sign in once; the profile is rebuilt automatically at sign-in.
+
+## Sign-in or the confirmation link says the service is temporarily unavailable
+
+You see "The service is temporarily unavailable. Please try again shortly." (or an API answers HTTP 503 with code `DATABASE_UNAVAILABLE`, or you land on `/login?error=unavailable`). Supabase accepted the request but the application could not reach its database, for example because of an invalid `DATABASE_URL`. The app ends your session so you are not left half signed in. The cause is in the server log on the line starting `[login: unexpected failure]`, `[auth callback: unexpected failure]` or `[api access: database]`; the log never contains the password. Check the database URL as described in the table above.
 
 ## Terminal shows "conflicting public file and page file ... /icon.svg"
 

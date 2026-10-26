@@ -21,6 +21,11 @@ export function configErrorResponse(error: ConfigError) {
   return jsonError(503, "SERVER_NOT_CONFIGURED", message);
 }
 
+/** Safe answer when the database cannot be used. The cause goes to the server log, never to the client. */
+export function databaseUnavailableResponse() {
+  return jsonError(503, "DATABASE_UNAVAILABLE", "The service is temporarily unavailable. Please try again shortly.");
+}
+
 export function getClientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   const first = forwarded?.split(",")[0]?.trim();
