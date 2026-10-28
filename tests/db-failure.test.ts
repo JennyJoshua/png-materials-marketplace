@@ -119,6 +119,9 @@ describe("login when the database fails AFTER Supabase sign-in succeeded", () =>
 });
 
 describe("e-mail confirmation callback when the database fails", () => {
+  // These tests assert the request origin, so they must not depend on a NEXT_PUBLIC_SITE_URL in the shell.
+  beforeEach(() => vi.stubEnv("NEXT_PUBLIC_SITE_URL", ""));
+  afterEach(() => vi.unstubAllEnvs());
   const req = () => new Request("https://app.test/auth/callback?code=abc123");
 
   it("ends the session and sends the user to a clear notice, not an error page", async () => {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { customerForm, jsonRequest, supabaseUser, supplierForm } from "./helpers";
 
 const h = vi.hoisted(() => ({
@@ -280,6 +280,9 @@ describe("POST /api/auth/logout", () => {
 });
 
 describe("GET /auth/callback (e-mail confirmation)", () => {
+  // These tests assert the request origin, so they must not depend on a NEXT_PUBLIC_SITE_URL in the shell.
+  beforeEach(() => vi.stubEnv("NEXT_PUBLIC_SITE_URL", ""));
+  afterEach(() => vi.unstubAllEnvs());
   const cb = (query: string) => callback(new Request(`https://app.test/auth/callback${query}`));
 
   it("redirects to login when the code is missing or invalid", async () => {

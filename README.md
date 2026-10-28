@@ -105,7 +105,7 @@ Copy `.env.example` to `.env` and fill in the values. Names only are committed.
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret**, server only |
-| `NEXT_PUBLIC_SITE_URL` | Optional; public site URL for confirmation links |
+| `NEXT_PUBLIC_SITE_URL` | Public site address (with `https://`). Optional locally; **set it on a hosted service behind a proxy such as Render**, where it decides where users land after confirming their e-mail |
 
 ### Database commands
 

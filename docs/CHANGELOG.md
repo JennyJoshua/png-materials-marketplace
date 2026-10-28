@@ -2,6 +2,24 @@
 
 All significant project changes are recorded here.
 
+## [0.1.4] - 2026-10-28 - E-mail confirmation redirects use the public address (PR #4 review)
+
+### Fixed
+- The e-mail confirmation callback (`/auth/callback`) now redirects to the configured public site address (`NEXT_PUBLIC_SITE_URL`) instead of the request URL, which behind Render is the server's internal address (for example `http://localhost:10000`). Verified on a production build: `request.url` reported `localhost` even when the request carried the public `Host` header.
+- Misconfiguration now fails safe. Previously a value such as `javascript:alert(1)` made the callback return a bare HTTP 500 and `ftp://...` redirected users to an `ftp://` address. Only `http` and `https` values are accepted; anything else falls back to the request origin with a one-time `[config]` warning that names the variable and never prints its value.
+- In production a missing value is logged once, because behind a proxy that fallback is the original bug.
+
+### Changed
+- The logic is a shared helper, `getPublicOrigin` in `lib/security/http.ts`, so other routes can reuse it.
+- Docs (`SETUP_RENDER.md`, `TROUBLESHOOTING.md`, `ARCHITECTURE.md`, `README.md`, `.env.example`) no longer call `NEXT_PUBLIC_SITE_URL` merely optional: it is needed on a hosted service behind a proxy, and a value present at build time is built in.
+- Two existing callback test groups no longer depend on the developer's shell environment.
+
+### Added
+- 33 tests in `tests/auth-callback-origin.test.ts` (every redirect branch, open-redirect attempts through `?next=`, a hostile request that cannot steer the redirect, origin-only reduction, fallback and warnings).
+
+### Not changed
+The logout redirect still uses the request URL on `main` (a separate branch addresses it). Nothing was deployed and no Render or Supabase setting was changed.
+
 ## [0.1.3] - 2026-10-25 - Phase 1 stabilisation pass (delivered for review, not deployed)
 
 Done without access to Render or Supabase. No production change was made and no migration command was run. Phase 1 remains PARTIALLY COMPLETE and Phase 2 has not started. Full evidence: docs/PHASE_1_VERIFICATION_REPORT.md.

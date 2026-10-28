@@ -46,6 +46,14 @@ The same icon exists in both `app/icon.svg` and `public/icon.svg`. Delete **`pub
 
 Prisma downloads small engine files from `binaries.prisma.sh`. Some networks block it. Try a different network or a mobile hotspot, then run `npm install` again.
 
+## After confirming my e-mail I land on `localhost` (or another wrong address)
+
+Behind a hosting proxy such as Render the server only knows its own internal address, so the confirmation page needs your public address from `NEXT_PUBLIC_SITE_URL` (`docs/SETUP_RENDER.md` section 3).
+
+1. Check that `NEXT_PUBLIC_SITE_URL` is set on the service to your public address **including `https://`** (for example `https://your-service.onrender.com`), with no path.
+2. Check the logs for a `[config] NEXT_PUBLIC_SITE_URL` warning. "is not set" means the variable is missing; "is not a valid http(s) URL" means it is set but wrong (a missing `https://` is the usual cause).
+3. Redeploy after changing it. A value present when the service was built is built in.
+
 ## The confirmation email never arrives, or the link fails
 
 - Supabase's built-in email sender has a very low sending limit and is meant for testing. Wait, or configure your own SMTP in Supabase.

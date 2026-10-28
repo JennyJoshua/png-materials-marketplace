@@ -43,9 +43,11 @@ Set these in the service's Environment settings (never in the repository):
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret.** Server only |
-| `NEXT_PUBLIC_SITE_URL` | Your production URL, for example `https://your-service.onrender.com` |
+| `NEXT_PUBLIC_SITE_URL` | **Set this.** Your public address with `https://`, for example `https://your-service.onrender.com`. No path. Without it, e-mail confirmation sends people to the server's internal address (`http://localhost:...`) |
 
 `NEXT_PUBLIC_*` values are baked in at build time. If you change them, trigger a new deploy. `DATABASE_URL` is read when the server runs.
+
+About `NEXT_PUBLIC_SITE_URL` specifically: behind Render the server sees its own internal address (such as `http://localhost:10000`) as the request URL, even when the visitor used your public address, so the e-mail confirmation page cannot work out your public address by itself and uses this setting. Only the scheme, host and port are used (any path is dropped), and only `http://` or `https://` values are accepted. If it is missing or not a valid URL, the app logs a `[config] NEXT_PUBLIC_SITE_URL ...` warning once and falls back to the internal address. If it is set when the service is built, that value is built in and a different runtime value is ignored, so set it before deploying and redeploy after changing it. After deploying, confirm a test sign-up e-mail and check that you land on your public site.
 
 ### Checking `DATABASE_URL` without revealing it
 

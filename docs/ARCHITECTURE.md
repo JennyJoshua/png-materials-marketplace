@@ -132,7 +132,7 @@ No bucket is created in Phase 1. When uploads arrive (supplier logos, product im
 | `NEXT_PUBLIC_SUPABASE_URL` | public | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | public | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **secret, server only** | writes `app_metadata.registration_type` at registration |
-| `NEXT_PUBLIC_SITE_URL` | public, optional | base URL for confirmation links if the request has no Origin |
+| `NEXT_PUBLIC_SITE_URL` | public; required on a hosted service behind a proxy | public address used for the e-mail confirmation redirects (the server's own request URL is an internal address behind Render) and for confirmation links when the request has no Origin |
 
 Real values are never committed. `.env.example` holds names only.
 

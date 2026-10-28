@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { syncAppUser } from "@/lib/auth/session";
 import { postLoginPath } from "@/lib/roles";
 import { logServerError } from "@/lib/security/log";
+import { getPublicOrigin } from "@/lib/security/http";
 
 /**
  * Landing point for the e-mail confirmation link (PKCE flow). Exchanges the one-time code for a
@@ -13,19 +14,10 @@ import { logServerError } from "@/lib/security/log";
  * and the user sees a clear notice on the sign-in page instead of an error page.
  */
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  // Render can give the app an internal request URL (for example localhost:10000). Use the
-  // explicitly configured public site origin for browser redirects, falling back only when absent.
-  let origin = requestUrl.origin;
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    try {
-      origin = new URL(process.env.NEXT_PUBLIC_SITE_URL).origin;
-    } catch {
-      // Keep the request origin as a fallback if the optional setting is malformed.
-    }
-  }
-
-  const { searchParams } = requestUrl;
+  // Behind Render, request.url is the internal address (for example localhost:10000), so redirects
+  // use the configured public origin. See getPublicOrigin for the rules and the fallback.
+  const origin = getPublicOrigin(request);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   if (!code) return NextResponse.redirect(`${origin}/login?error=callback`);
 
