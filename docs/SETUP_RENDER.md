@@ -43,9 +43,11 @@ Set these in the service's Environment settings (never in the repository):
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret.** Server only |
-| `NEXT_PUBLIC_SITE_URL` | Your production URL, for example `https://your-service.onrender.com` |
+| `NEXT_PUBLIC_SITE_URL` | Required for hosted deployments behind a proxy. Set the public `https://` URL before building. |
 
 `NEXT_PUBLIC_*` values are baked in at build time. If you change them, trigger a new deploy. `DATABASE_URL` is read when the server runs.
+
+For authentication confirmation redirects, set `NEXT_PUBLIC_SITE_URL` to the public site origin (for example `https://your-service.onrender.com`) before building. The callback uses only the scheme, host and port; paths and query strings are discarded. Missing or invalid values fall back to the request origin and produce a one-time configuration warning, but that fallback may be an internal Render address. Rebuild/redeploy after changing this variable because `NEXT_PUBLIC_*` values are baked in at build time.
 
 ### Checking `DATABASE_URL` without revealing it
 
