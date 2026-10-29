@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAuthUser } from "@/lib/auth/session";
 import { writeAuditLog } from "@/lib/security/audit";
-import { isSameOrigin, jsonError, jsonOk } from "@/lib/security/http";
+import { getPublicOrigin, isSameOrigin, jsonError, jsonOk } from "@/lib/security/http";
 
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) return jsonError(403, "BAD_ORIGIN", "Request origin not allowed.");
@@ -16,5 +16,5 @@ export async function POST(request: Request) {
 
   // HTML form posts get a redirect; fetch() callers asking for JSON get JSON.
   if (request.headers.get("accept")?.includes("application/json")) return jsonOk({ signedOut: true });
-  return NextResponse.redirect(new URL("/login", request.url), 303);
+  return NextResponse.redirect(`${getPublicOrigin(request)}/login`, 303);
 }
