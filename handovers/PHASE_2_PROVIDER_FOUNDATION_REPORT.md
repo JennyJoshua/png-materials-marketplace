@@ -20,7 +20,7 @@ Adds one optional provider profile per application user; individual/business kin
 - `app/provider/profile/page.tsx`, `app/provider/profile/ProviderProfileForm.tsx`
 - `app/admin/providers/page.tsx`, `app/admin/providers/ProviderAdminList.tsx`
 - `components/AppShell.tsx`
-- `tests/provider-validation.test.ts`, `tests/provider-security-static.test.ts`, `tests/static-security.test.ts`
+- `tests/provider-validation.test.ts`, `tests/provider-security-static.test.ts`, `tests/provider-routes.test.ts`, `tests/static-security.test.ts`
 - `docs/DATABASE.md`, `docs/ARCHITECTURE.md`, `docs/PROJECT_REQUIREMENTS.md`, `docs/ROADMAP.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`, `docs/CHANGELOG.md`
 - `handovers/PHASE_2_PROVIDER_FOUNDATION_REPORT.md`
 
@@ -42,7 +42,7 @@ Migration enables RLS on both new public tables, creates no policies, and revoke
 - `npx prisma generate`: PASS (Prisma Client 6.19.3 generated).
 - `npm run typecheck`: PASS.
 - `npm run lint`: PASS.
-- `npm test`: PASS, 208 tests across 17 files. Two Phase 1-only static assertions were updated to scope their assertions to the frozen Phase 1 migration and to expect the Phase 2 schema additions; no tests were deleted or weakened. New provider tests cover validation and static security invariants.
+- `npm test`: PASS, 216 tests across 18 files. Two Phase 1-only static assertions were updated to scope their assertions to the frozen Phase 1 migration and to expect the Phase 2 schema additions; no tests were deleted or weakened. New provider tests cover input validation, owner/admin API route behavior, owner scoping, suspended-provider edit blocking, self-review blocking, audit calls, service-seed idempotence and migration security invariants. They do not replace a live integration test against Supabase.
 - `npm ci`: PASS (exit 0; npm emitted install-script approval notices, so Prisma client generation was run explicitly afterward).
 - `npm run build`: PASS (Next.js production build completed; provider and admin routes included).
 - Migration SQL was not executed against PostgreSQL or production; live RLS was not checked.
