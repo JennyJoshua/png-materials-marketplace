@@ -41,6 +41,24 @@ type AuditInput = {
   request?: Request;
 };
 
+/** Write an audit record through an existing transaction. Failures abort the transaction. */
+export async function writeAuditLogOrThrow(
+  tx: Prisma.TransactionClient,
+  input: AuditInput,
+): Promise<void> {
+  await tx.auditLog.create({
+    data: {
+      userId: input.userId ?? null,
+      action: input.action,
+      resourceType: input.resourceType,
+      resourceId: input.resourceId,
+      metadata: sanitizeMetadata(input.metadata),
+      ipAddress: input.request ? getClientIp(input.request) : undefined,
+      userAgent: input.request?.headers.get("user-agent")?.slice(0, 300),
+    },
+  });
+}
+
 /** Best-effort: an audit failure must never break the request that triggered it. */
 export async function writeAuditLog(input: AuditInput): Promise<void> {
   try {
