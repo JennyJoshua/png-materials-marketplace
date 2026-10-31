@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextResponse } from "next/server";
 
 const mocks = vi.hoisted(() => ({
@@ -28,9 +28,11 @@ const user = { id: "owner-1", status: "ACTIVE", role: "CUSTOMER", email: "privat
 const payload = { displayName: "Test Provider", providerKind: "INDIVIDUAL", providerType: "SERVICES", province: "Gulf", deliveryAvailable: false, pickupAvailable: false };
 const req = (body: unknown) => new Request("https://example.test/api", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
+beforeEach(() => {
+  mocks.transaction.mockImplementation(async (callback: (client: typeof tx) => unknown) => callback(tx));
+});
 afterEach(() => {
   vi.clearAllMocks();
-  mocks.transaction.mockImplementation(async (callback: (client: typeof tx) => unknown) => callback(tx));
 });
 
 describe("provider owner API", () => {
