@@ -1,0 +1,54 @@
+name: Prisma Production Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_production_migration:
+        description: "Confirm that the pending Phase 2 migration may be applied to the production database"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prisma-production-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Apply committed Prisma migrations
+    if: ${{ inputs.confirm_production_migration == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+    steps:
+      - name: Check required database secrets are configured
+        shell: bash
+        run: |
+          test -n "$DATABASE_URL" || { echo "::error::GitHub secret DATABASE_URL is missing"; exit 1; }
+          test -n "$DIRECT_URL" || { echo "::error::GitHub secret DIRECT_URL is missing"; exit 1; }
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Show Prisma migration status before deployment
+        run: npx prisma migrate status
+
+      - name: Apply pending Prisma migrations
+        run: npx prisma migrate deploy
+
+      - name: Verify Prisma migration status after deployment
+        run: npx prisma migrate status
