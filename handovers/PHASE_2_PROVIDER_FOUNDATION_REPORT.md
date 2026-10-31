@@ -42,8 +42,8 @@ Migration enables RLS on both new public tables, creates no policies, and revoke
 - `npx prisma generate`: PASS (Prisma Client 6.19.3 generated).
 - `npm run typecheck`: PASS.
 - `npm run lint`: PASS.
-- `npm test`: PASS, 207 tests across 17 files. Two Phase 1-only static assertions were updated to scope their assertions to the frozen Phase 1 migration and to expect the Phase 2 schema additions; no tests were deleted or weakened. New provider tests cover validation and static security invariants.
-- `npm ci`: started; node_modules directory was created, but tool call timed out before an exit status was captured. NOT VERIFIED.
+- `npm test`: PASS, 208 tests across 17 files. Two Phase 1-only static assertions were updated to scope their assertions to the frozen Phase 1 migration and to expect the Phase 2 schema additions; no tests were deleted or weakened. New provider tests cover validation and static security invariants.
+- `npm ci`: PASS (exit 0; npm emitted install-script approval notices, so Prisma client generation was run explicitly afterward).
 - `npm run build`: PASS (Next.js production build completed; provider and admin routes included).
 - Migration SQL was not executed against PostgreSQL or production; live RLS was not checked.
 
