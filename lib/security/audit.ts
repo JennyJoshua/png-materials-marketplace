@@ -11,6 +11,10 @@ export const AUDIT_ACTIONS = [
   "PROFILE_CREATE_FAILED",
   "PROFILE_RECOVERED",
   "ACCESS_DENIED",
+  "PROVIDER_PROFILE_CREATED",
+  "PROVIDER_PROFILE_UPDATED",
+  "PROVIDER_STATUS_CHANGED",
+  "PROVIDER_VERIFICATION_CHANGED",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -36,6 +40,24 @@ type AuditInput = {
   metadata?: Record<string, unknown>;
   request?: Request;
 };
+
+/** Write an audit record through an existing transaction. Failures abort the transaction. */
+export async function writeAuditLogOrThrow(
+  tx: Prisma.TransactionClient,
+  input: AuditInput,
+): Promise<void> {
+  await tx.auditLog.create({
+    data: {
+      userId: input.userId ?? null,
+      action: input.action,
+      resourceType: input.resourceType,
+      resourceId: input.resourceId,
+      metadata: sanitizeMetadata(input.metadata),
+      ipAddress: input.request ? getClientIp(input.request) : undefined,
+      userAgent: input.request?.headers.get("user-agent")?.slice(0, 300),
+    },
+  });
+}
 
 /** Best-effort: an audit failure must never break the request that triggered it. */
 export async function writeAuditLog(input: AuditInput): Promise<void> {

@@ -848,3 +848,7 @@ Phase 1 already provides `users`, `customer_profiles`, `supplier_profiles`, `pro
 4. What verification levels are practical to operate in Papua New Guinea?
 5. Which payment approaches are workable and legal, and when to evaluate them?
 6. How are disputes between buyer and provider handled in practice?
+
+## Phase 2 implementation note (2026-10-31)
+
+Provider capability is represented by an optional `provider_profiles` row, independent of `users.role`; CUSTOMER and legacy SUPPLIER accounts can own one profile. Buyer capability remains universal. Server APIs use the existing Supabase `getUser()` plus database-backed guards, then scope owner access by verified `user.id`. Provider status (DRAFT/PENDING_REVIEW/ACTIVE/SUSPENDED) is independent of verification (UNVERIFIED/CONTACT_CONFIRMED/DOCUMENTS_CHECKED). Only ADMIN APIs can change either. No public provider endpoint is introduced.

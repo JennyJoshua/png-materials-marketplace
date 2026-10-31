@@ -17,6 +17,8 @@ export function AppShell({ user, children }: { user?: ShellUser; children: React
             {user ? (
               <>
                 <Link href={ROLE_HOME[user.role]}>Dashboard</Link>
+                <Link href="/provider/profile">Provider profile</Link>
+                {user.role === "ADMIN" ? <Link href="/admin/providers">Manage providers</Link> : null}
                 {/* POST form: logging out is a state change, so it is never a plain link. */}
                 <form action="/api/auth/logout" method="post">
                   <button type="submit">Sign out</button>

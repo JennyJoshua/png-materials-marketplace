@@ -961,3 +961,7 @@ Audit Logs
 ---
 
 End of document.
+
+## Phase 2 provider foundation implementation (2026-10-31)
+
+Implemented on the Phase 2 review branch: one provider profile per account; individual/business kind; products/services/both capability; PNG primary location; optional contact/business details; owner create/read/update; admin status and verification controls; separate service categories; additive migration with RLS and client-role revokes. Listings, discovery, bookings, quotes, orders, payments and reviews remain out of scope. `users.role` and public registration roles remain unchanged.

@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { CATEGORIES } from "./categories";
+import { SERVICE_CATEGORIES } from "./service-categories";
 
 /**
  * Phase 1 seed: product categories ONLY. Idempotent (safe to run repeatedly).
@@ -16,8 +17,10 @@ async function main() {
       create: { name },
     });
   }
+  for (const name of SERVICE_CATEGORIES) await prisma.serviceCategory.upsert({ where: { name }, update: {}, create: { name } });
   const count = await prisma.productCategory.count();
-  console.log(`Seeded categories. product_categories rows: ${count}`);
+  const serviceCount = await prisma.serviceCategory.count();
+  console.log(`Seeded categories. product_categories rows: ${count}; service_categories rows: ${serviceCount}`);
 }
 
 main()

@@ -42,6 +42,28 @@ enum CategoryStatus {
   INACTIVE
 }
 
+enum ProviderKind {
+  INDIVIDUAL
+  BUSINESS
+}
+enum ProviderType {
+  PRODUCTS
+  SERVICES
+  BOTH
+}
+enum ProviderStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  SUSPENDED
+}
+enum ProviderVerificationLevel {
+  UNVERIFIED
+  CONTACT_CONFIRMED
+  DOCUMENTS_CHECKED
+}
+
+
 /// Application user record. `id` = Supabase Auth user UUID (supplied by the application, no DB default).
 /// `role` here is the AUTHORITATIVE application role.
 model User {
@@ -58,6 +80,8 @@ model User {
   customerProfile CustomerProfile?
   supplierProfile SupplierProfile?
   auditLogs       AuditLog[]
+  providerProfile ProviderProfile?
+  verifiedProviders ProviderProfile[] @relation("ProviderVerifier")
 
   @@index([role])
   @@index([status])
@@ -130,4 +154,47 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model ProviderProfile {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
+  displayName String @map("display_name") @db.VarChar(120)
+  providerKind ProviderKind @map("provider_kind")
+  providerType ProviderType @map("provider_type")
+  description String? @db.VarChar(2000)
+  phone String? @db.VarChar(40)
+  publicEmail String? @map("public_email") @db.VarChar(254)
+  address String? @db.VarChar(300)
+  province String @db.VarChar(100)
+  district String? @db.VarChar(100)
+  townOrArea String? @map("town_or_area") @db.VarChar(120)
+  businessRegistrationNumber String? @map("business_registration_number") @db.VarChar(100)
+  websiteUrl String? @map("website_url") @db.VarChar(500)
+  logoUrl String? @map("logo_url") @db.VarChar(500)
+  deliveryAvailable Boolean @default(false) @map("delivery_available")
+  pickupAvailable Boolean @default(false) @map("pickup_available")
+  status ProviderStatus @default(DRAFT)
+  verificationLevel ProviderVerificationLevel @default(UNVERIFIED) @map("verification_level")
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
+  verifiedByUserId String? @map("verified_by_user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifiedBy User? @relation("ProviderVerifier", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
+  @@index([status, createdAt])
+  @@index([verificationLevel])
+  @@index([province, district])
+  @@index([displayName])
+  @@map("provider_profiles")
+}
+
+model ServiceCategory {
+  id String @id @default(uuid()) @db.Uuid
+  name String @unique @db.VarChar(120)
+  description String? @db.VarChar(500)
+  status CategoryStatus @default(ACTIVE)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@map("service_categories")
 }

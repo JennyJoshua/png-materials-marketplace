@@ -167,3 +167,7 @@ The earlier seven-phase plan was written for building materials only. This is ho
 ## What this roadmap does not decide
 
 Payment methods, subscription pricing, commission rates, the public brand name, whether businesses get staff accounts, and the final verification levels. These are open questions listed in ARCHITECTURE.md Part C12.
+
+## Phase 2 status update (2026-10-31)
+
+Provider foundation is on review branch `feature/phase-2-provider-foundation`, based on current main. It is not merged or deployed. Owner must review ZIP and migration before any application. Legacy supplier data is retained untouched; no speculative backfill. Product listings/search/comparison and service listings/search/bookings/quotes remain later phases.

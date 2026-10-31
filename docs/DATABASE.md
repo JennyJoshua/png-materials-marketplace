@@ -608,3 +608,7 @@ shopping_carts
 multi_supplier_orders
 
 These should NOT be added to the MVP unless required.
+
+## Phase 2 provider foundation (2026-10-31)
+
+Additive tables: `provider_profiles` (one row per user) and `service_categories`. New enums: `ProviderKind`, `ProviderType`, `ProviderStatus`, `ProviderVerificationLevel`. Migration `20261031000000_phase2_provider_foundation` adds UUID keys, unique owner FK, verifier FK, indexes and verification actor/timestamp constraint. Both new public tables enable RLS and revoke all privileges from `anon` and `authenticated`; no policies are created. Phase 1 SQL and `supplier_profiles`/`product_categories` remain unchanged. Legacy suppliers are not backfilled because old verification semantics cannot be mapped safely.
