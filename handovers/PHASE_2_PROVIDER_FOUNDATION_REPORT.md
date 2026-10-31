@@ -56,3 +56,23 @@ Migration enables RLS on both new public tables, creates no policies, and revoke
 5. No public provider endpoint exists. Future display must filter ACTIVE and select safe public fields.
 6. Before merge: complete `npm ci`, lint, typecheck, tests, Prisma validate/generate, build; inspect migration against scratch PostgreSQL; review diff.
 7. Owner must approve and apply migration separately after review. Do not upload ZIP to automatic `_inbox`; it commits to `main` and may trigger Render deployment.
+## Review corrections (2026-11-01)
+
+Following independent review of draft PR #9:
+
+- Editing an ACTIVE provider profile now moves it to PENDING_REVIEW. Its verification level and verifier evidence are retained as a separate record; administrator review is required before the profile is active again.
+- Provider profile creation, owner edits, administrator status changes and verification changes now write their audit records inside the same PostgreSQL transaction as the data change. Audit insertion errors abort the transaction rather than being swallowed for these provider operations.
+- Owner and administrator update transactions use SERIALIZABLE isolation.
+- Added regression tests for active-profile review reset and audit failure propagation; static security assertions now tolerate formatting changes.
+
+Validation rerun in ATL Sandbox against the updated branch:
+- `npm ci`: PASS.
+- `npm test`: PASS, 219 tests across 18 files.
+- `npm run typecheck`: PASS.
+- `npm run lint`: PASS.
+- `npx prisma validate`: PASS.
+- `npx prisma generate`: PASS.
+- `npm run build`: PASS.
+- Scratch PostgreSQL 15 migration check: PASS. Applied Phase 1 then Phase 2 SQL to a fresh disposable local database with `anon` and `authenticated` roles present. Both new tables report RLS enabled; `has_table_privilege` returned false for SELECT on both new tables for the `anon` role and on `provider_profiles` for `authenticated`. No production database was used.
+
+The scratch migration test confirms the SQL applies cleanly after the repository's Phase 1 migration on PostgreSQL 15. It does not replace validation against the exact Supabase production environment. No production migration, merge, or deployment was performed.
