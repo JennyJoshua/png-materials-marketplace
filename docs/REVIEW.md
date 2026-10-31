@@ -189,3 +189,7 @@ Phase 2 (then called Supplier Portal), **after** the manual setup above is done 
 ## Review rule
 
 After each major phase, update this document with what worked, what failed, security and performance concerns, UX problems, required architecture changes and deferred decisions.
+
+## Phase 2 branch review status (2026-10-31)
+
+A provider-foundation implementation is on `feature/phase-2-provider-foundation`. Review branch only; migration not applied to any database and no live RLS, Supabase or Render settings changed. See `handovers/PHASE_2_PROVIDER_FOUNDATION_REPORT.md` for validation evidence and limitations.

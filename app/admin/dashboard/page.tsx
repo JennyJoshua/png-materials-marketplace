@@ -18,6 +18,7 @@ export default async function AdminDashboard() {
   return (
     <AppShell user={user}>
       <h1>Administration</h1>
+      <p><a href="/admin/providers">Manage provider profiles</a></p>
       <AccountPanel user={user} />
       <section className="panel" aria-labelledby="counts-heading">
         <h2 id="counts-heading">Accounts</h2>

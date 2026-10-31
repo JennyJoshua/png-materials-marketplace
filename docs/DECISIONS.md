@@ -632,3 +632,6 @@ Reason
 
 Prisma records a checksum of the migration file. If the live history already holds the checksum of the current file, any edit would make the repository differ from the record.
 
+## Phase 2 provider foundation decision (2026-10-31)
+
+Use one optional provider profile per user, with provider capability separate from `users.role`; retain CUSTOMER/SUPPLIER/ADMIN unchanged. Keep status separate from verification. Preserve `supplier_profiles` and all historical rows; do not auto-map legacy verification because PENDING/VERIFIED/SUSPENDED does not establish equivalent provider state or evidence level. Use primary province/district/town only; multi-area coverage is deferred. New tables are server-Prisma-only with RLS enabled and no anon/authenticated grants or policies.

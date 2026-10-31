@@ -20,11 +20,9 @@ const sourceFiles = walk(root).filter((f) => /\.(ts|tsx)$/.test(f));
 const stripSqlComments = (sql: string) => sql.replace(/--.*$/gm, "");
 const stripCodeComments = (code: string) => code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
-const migrationDir = path.join(root, "prisma", "migrations");
-const migrationSql = readdirSync(migrationDir)
-  .filter((d) => statSync(path.join(migrationDir, d)).isDirectory())
-  .map((d) => readFileSync(path.join(migrationDir, d, "migration.sql"), "utf8"))
-  .join("\n");
+const phase1Sql = read("prisma/migrations/20261005000000_phase1_foundation/migration.sql");
+const phase2Sql = read("prisma/migrations/20261031000000_phase2_provider_foundation/migration.sql");
+const migrationSql = phase1Sql;
 
 const PHASE1_TABLES = ["users", "customer_profiles", "supplier_profiles", "product_categories", "audit_logs"];
 
@@ -77,7 +75,7 @@ describe("Prisma schema", () => {
 
   it("declares only the five Phase 1 models", () => {
     const models = [...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]);
-    expect(models.sort()).toEqual(["AuditLog", "CustomerProfile", "ProductCategory", "SupplierProfile", "User"]);
+    expect(models.sort()).toEqual(["AuditLog", "CustomerProfile", "ProductCategory", "ProviderProfile", "ServiceCategory", "SupplierProfile", "User"]);
   });
 
   it("uses the pooled DATABASE_URL at runtime and DIRECT_URL for migrations", () => {
@@ -175,10 +173,26 @@ describe("secrets and client/server separation", () => {
 });
 
 describe("Phase boundary", () => {
-  it("has no Phase 2+ routes or APIs", () => {
+  it("keeps later marketplace transaction and listing routes out of this provider-foundation phase", () => {
     const routes = walk(path.join(root, "app")).map((f) => rel(f).split(path.sep).join("/"));
-    for (const forbidden of ["products", "rfqs", "quotations", "orders", "projects", "marketplace"]) {
+    for (const forbidden of ["products", "rfqs", "quotations", "orders", "projects", "marketplace", "bookings", "payments"]) {
       expect(routes.some((r) => r.split("/").includes(forbidden)), forbidden).toBe(false);
     }
+  });
+});
+
+
+describe("Phase 2 provider migration", () => {
+  it("adds only provider profiles and service categories with RLS and no client policies", () => {
+    const created = [...phase2Sql.matchAll(/CREATE TABLE "([a-z_]+)"/g)].map(m => m[1]).sort();
+    expect(created).toEqual(["provider_profiles", "service_categories"]);
+    expect(phase2Sql).toMatch(/ALTER TABLE "provider_profiles" ENABLE ROW LEVEL SECURITY/);
+    expect(phase2Sql).toMatch(/ALTER TABLE "service_categories" ENABLE ROW LEVEL SECURITY/);
+    expect(stripSqlComments(phase2Sql)).not.toMatch(/CREATE POLICY|USING\s*\(\s*true\s*\)/i);
+    expect(phase2Sql).toMatch(/REVOKE ALL ON TABLE "provider_profiles", "service_categories"/);
+  });
+  it("does not rewrite the frozen Phase 1 migration", () => {
+    expect(phase1Sql).toContain("CREATE TABLE \"supplier_profiles\"");
+    expect(phase1Sql).not.toContain("provider_profiles");
   });
 });

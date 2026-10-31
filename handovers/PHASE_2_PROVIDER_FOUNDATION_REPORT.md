@@ -1,0 +1,58 @@
+# Phase 2 — Provider Foundation Implementation Report
+
+Date: 2026-10-31  
+Repository: `JennyJoshua/png-materials-marketplace`  
+Base: `main` at `b83da5417e596534a21f0194c6d024f7b9453a2b` (includes merged logout redirect fix PR #8)  
+Branch: `feature/phase-2-provider-foundation`  
+Deployment: not merged or deployed. No production database or settings accessed.
+
+## Summary
+
+Adds one optional provider profile per application user; individual/business kind; products/services/both capability; PNG primary location; owner create/read/edit; administrator status and verification controls; and separate service categories. Does not implement listings, search, transactions, bookings, quotes, payments or uploads.
+
+## Files changed/new
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20261031000000_phase2_provider_foundation/migration.sql`
+- `prisma/service-categories.ts`, `prisma/seed.ts`
+- `lib/validation/provider.ts`, `lib/security/audit.ts`
+- `app/api/providers/me/route.ts`, `app/api/admin/providers/route.ts`
+- `app/provider/profile/page.tsx`, `app/provider/profile/ProviderProfileForm.tsx`
+- `app/admin/providers/page.tsx`, `app/admin/providers/ProviderAdminList.tsx`
+- `components/AppShell.tsx`
+- `tests/provider-validation.test.ts`, `tests/provider-security-static.test.ts`, `tests/static-security.test.ts`
+- `docs/DATABASE.md`, `docs/ARCHITECTURE.md`, `docs/PROJECT_REQUIREMENTS.md`, `docs/ROADMAP.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`, `docs/CHANGELOG.md`
+- `handovers/PHASE_2_PROVIDER_FOUNDATION_REPORT.md`
+
+## Schema and compatibility
+
+New enums: `ProviderKind`, `ProviderType`, `ProviderStatus`, `ProviderVerificationLevel`. New tables: `provider_profiles`, `service_categories`. Provider profile owner is unique and references `users.id`; optional verifier references `users.id`. A check constraint requires verifier and timestamp for non-UNVERIFIED levels. Indexes cover status/date, verification, location and display name.
+
+Legacy `supplier_profiles` records are deliberately untouched. The old `VerificationStatus` values do not safely prove the new provider status or evidence level. No guessed backfill is performed. Existing SUPPLIER role and all role values remain unchanged. `product_categories` and its existing records remain unchanged. Service category seed uses upsert with empty update, preserving administrator edits.
+
+## Authorization and security
+
+Owner API uses `requireApiAccess()` (Supabase `getUser()` and authoritative database user status/role) and scopes all profile reads/writes by verified `user.id`. Client user IDs and status/verification claims are not accepted. Creation is limited to ACTIVE accounts and creates PENDING_REVIEW / UNVERIFIED. Owners cannot activate, suspend, self-verify or unsuspend. Suspended provider profiles cannot be edited through owner API. Admin API uses database-backed ADMIN guard, rejects self-review, and records safe status/verification audit metadata.
+
+Migration enables RLS on both new public tables, creates no policies, and revokes all privileges from `anon` and `authenticated` where those roles exist. No changes to `_prisma_migrations`, Phase 1 migration SQL, production database, Supabase or Render settings.
+
+## Validation evidence
+
+- `npx prisma validate`: PASS (non-secret placeholder DATABASE_URL/DIRECT_URL used only for schema parsing).
+- `npx prisma generate`: PASS (Prisma Client 6.19.3 generated).
+- `npm run typecheck`: PASS.
+- `npm run lint`: PASS.
+- `npm test`: PASS, 207 tests across 17 files. Two Phase 1-only static assertions were updated to scope their assertions to the frozen Phase 1 migration and to expect the Phase 2 schema additions; no tests were deleted or weakened. New provider tests cover validation and static security invariants.
+- `npm ci`: started; node_modules directory was created, but tool call timed out before an exit status was captured. NOT VERIFIED.
+- `npm run build`: PASS (Next.js production build completed; provider and admin routes included).
+- Migration SQL was not executed against PostgreSQL or production; live RLS was not checked.
+
+## Limitations and owner review
+
+1. Legacy supplier profiles are not backfilled; review a safe mapping separately.
+2. Admin list is capped at 100; moderation screen is intentionally minimal.
+3. Service categories are seeded but not yet assigned to providers; association is deferred.
+4. Only primary province/district/town is stored; multiple service areas are deferred.
+5. No public provider endpoint exists. Future display must filter ACTIVE and select safe public fields.
+6. Before merge: complete `npm ci`, lint, typecheck, tests, Prisma validate/generate, build; inspect migration against scratch PostgreSQL; review diff.
+7. Owner must approve and apply migration separately after review. Do not upload ZIP to automatic `_inbox`; it commits to `main` and may trigger Render deployment.

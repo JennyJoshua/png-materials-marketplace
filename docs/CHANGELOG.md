@@ -100,3 +100,7 @@ Supabase project, migration application, seed run, live sign-up and sign-in test
 ## [0.1.0-planning] - Initial Foundation Planning
 
 Product vision, workflows, MVP scope, initial architecture and database design, and the phase plan were written. No application code.
+
+## 2026-10-31 — Phase 2 provider foundation (review branch)
+
+Added provider profile schema and additive migration, service-category taxonomy/seed, owner profile form/API, admin provider management API/page, validation/security regression tests and Phase 2 documentation. No legacy supplier backfill, production migration, merge or deployment.
