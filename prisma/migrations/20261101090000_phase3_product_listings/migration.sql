@@ -53,4 +53,4 @@ CREATE INDEX "product_listings_name_idx" ON "product_listings"("name");
 
 -- Public Supabase roles must not access this server-Prisma-only table directly.
 ALTER TABLE "product_listings" ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON TABLE "product_listings" FROM anon, authenticated;
+REVOKE ALL ON TABLE "product_listings" FROM PUBLIC, anon, authenticated;
