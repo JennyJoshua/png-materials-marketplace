@@ -14,7 +14,7 @@ export async function GET() {
     where: { providerProfileId: provider.id },
     orderBy: { updatedAt: "desc" },
     take: 100,
-    select: { id: true, name: true, brand: true, unit: true, price: true, stockStatus: true, listingStatus: true, priceUpdatedAt: true, stockUpdatedAt: true, createdAt: true, updatedAt: true, category: { select: { id: true, name: true, status: true } } },
+    select: { id: true, name: true, brand: true, specification: true, description: true, unit: true, price: true, stockStatus: true, listingStatus: true, priceUpdatedAt: true, stockUpdatedAt: true, createdAt: true, updatedAt: true, category: { select: { id: true, name: true, status: true } } },
   });
   return jsonOk({ listings });
 }
