@@ -3,6 +3,7 @@ import { getOwnedActiveProvider } from "@/lib/auth/provider-access";
 import { prisma } from "@/lib/db/prisma";
 import { jsonError, jsonOk, readJson } from "@/lib/security/http";
 import { productListingPatchSchema } from "@/lib/validation/products";
+import { Prisma } from "@prisma/client";
 import { writeAuditLogOrThrow } from "@/lib/security/audit";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -27,7 +28,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const category = await prisma.productCategory.findFirst({ where: { id: parsed.data.categoryId, status: "ACTIVE" }, select: { id: true } });
     if (!category) return jsonError(400, "CATEGORY_UNAVAILABLE", "Choose an active product category.");
   }
-  const priceChanged = parsed.data.price !== undefined && Number(parsed.data.price) !== Number(existing.price);
+  const priceChanged = parsed.data.price !== undefined && !new Prisma.Decimal(parsed.data.price).equals(existing.price);
   const stockChanged = parsed.data.stockStatus !== undefined && parsed.data.stockStatus !== existing.stockStatus;
 
   const listing = await prisma.$transaction(async (tx) => {
