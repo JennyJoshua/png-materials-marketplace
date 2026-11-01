@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db/prisma";
 import { jsonError, jsonOk } from "@/lib/security/http";
 import { findPublicProducts } from "@/lib/products/queries";
 
