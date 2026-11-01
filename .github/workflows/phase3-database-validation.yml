@@ -1,0 +1,110 @@
+name: Phase 3 database validation
+
+on:
+  push:
+    branches:
+      - feature/phase-3-product-marketplace
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-postgres-migration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/postgres?schema=public
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate Prisma schema
+        run: npx prisma validate
+      - name: Create Supabase client roles in disposable PostgreSQL
+        run: |
+          psql "$DIRECT_URL" -v ON_ERROR_STOP=1 -c 'CREATE ROLE anon NOLOGIN;'
+          psql "$DIRECT_URL" -v ON_ERROR_STOP=1 -c 'CREATE ROLE authenticated NOLOGIN;'
+      - name: Apply all migrations to disposable PostgreSQL
+        run: npx prisma migrate deploy
+      - name: Verify Phase 3 RLS, grants, constraints and relationships
+        run: |
+          psql "$DIRECT_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$
+          DECLARE
+            rls_enabled BOOLEAN;
+          BEGIN
+            SELECT c.relrowsecurity INTO rls_enabled
+            FROM pg_class c
+            WHERE c.oid = 'public.product_listings'::regclass;
+            IF rls_enabled IS DISTINCT FROM TRUE THEN
+              RAISE EXCEPTION 'RLS is not enabled on product_listings';
+            END IF;
+
+            IF EXISTS (
+              SELECT 1 FROM pg_policy
+              WHERE polrelid = 'public.product_listings'::regclass
+            ) THEN
+              RAISE EXCEPTION 'Unexpected policy exists on product_listings';
+            END IF;
+
+            IF has_table_privilege('anon', 'public.product_listings', 'SELECT')
+              OR has_table_privilege('anon', 'public.product_listings', 'INSERT')
+              OR has_table_privilege('authenticated', 'public.product_listings', 'SELECT')
+              OR has_table_privilege('authenticated', 'public.product_listings', 'INSERT') THEN
+              RAISE EXCEPTION 'Supabase client roles retain product_listings privileges';
+            END IF;
+
+            IF EXISTS (
+              SELECT 1
+              FROM pg_class c,
+                   LATERAL aclexplode(COALESCE(c.relacl, acldefault('r', c.relowner))) a
+              WHERE c.oid = 'public.product_listings'::regclass
+                AND a.grantee = 0
+            ) THEN
+              RAISE EXCEPTION 'PUBLIC retains product_listings privileges';
+            END IF;
+
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_constraint
+              WHERE conrelid = 'public.product_listings'::regclass
+                AND conname = 'product_listings_price_positive'
+            ) THEN
+              RAISE EXCEPTION 'Positive price constraint is missing';
+            END IF;
+
+            IF (
+              SELECT count(*) FROM pg_constraint
+              WHERE conrelid = 'public.product_listings'::regclass
+                AND contype = 'f' AND confdeltype = 'r'
+            ) <> 2 THEN
+              RAISE EXCEPTION 'Expected two RESTRICT foreign keys on product_listings';
+            END IF;
+          END
+          $$;
+          SQL
+      - name: Confirm generated Prisma client
+        run: npx prisma generate
