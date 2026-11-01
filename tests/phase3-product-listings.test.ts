@@ -32,7 +32,7 @@ describe("Phase 3 product listing database foundation", () => {
 
   it("enables RLS without creating public policies and revokes public API roles", () => {
     expect(migration).toContain('ALTER TABLE "product_listings" ENABLE ROW LEVEL SECURITY');
-    expect(migration).toContain("REVOKE ALL ON TABLE \"product_listings\" FROM anon, authenticated");
+    expect(migration).toContain("REVOKE ALL ON TABLE \"product_listings\" FROM PUBLIC, anon, authenticated");
     expect(migration).not.toMatch(/CREATE POLICY/i);
   });
 
