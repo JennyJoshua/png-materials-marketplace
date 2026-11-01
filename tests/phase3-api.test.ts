@@ -33,6 +33,7 @@ vi.mock("@/lib/security/audit", () => ({ writeAuditLogOrThrow: m.audit }));
 import { POST as providerCreate } from "@/app/api/provider/products/route";
 import { PATCH as providerPatch } from "@/app/api/provider/products/[id]/route";
 import { GET as adminCategories } from "@/app/api/admin/categories/route";
+import { GET as publicCategories } from "@/app/api/categories/route";
 
 const user = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -111,5 +112,18 @@ describe("Phase 3 administrator category access", () => {
     const response = await adminCategories();
     expect(response.status).toBe(403);
     expect(m.categoryFindMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("Phase 3 public category API", () => {
+  it("returns only active category fields for public browse filters", async () => {
+    m.categoryFindMany.mockResolvedValue([{ id: "category-1", name: "Cement", description: null }]);
+    const response = await publicCategories();
+    expect(response.status).toBe(200);
+    expect(m.categoryFindMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { status: "ACTIVE" },
+      select: { id: true, name: true, description: true },
+    }));
+    expect(m.access).not.toHaveBeenCalled();
   });
 });
