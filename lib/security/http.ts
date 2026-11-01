@@ -107,3 +107,11 @@ export async function readJson(request: Request): Promise<unknown> {
     return undefined;
   }
 }
+
+
+/** Reject cross-origin state-changing API requests to reduce cookie-based CSRF risk. */
+export function sameOriginError(request: Request) {
+  return isSameOrigin(request)
+    ? null
+    : jsonError(403, "CROSS_ORIGIN_REQUEST", "This request must come from the application website.");
+}
