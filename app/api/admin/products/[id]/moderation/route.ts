@@ -23,6 +23,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (old.listingStatus === parsed.data.status) {
       return { listing: { id: old.id, listingStatus: old.listingStatus, updatedAt: old.updatedAt }, unchanged: true };
     }
+    if (parsed.data.status === "SUSPENDED" && old.listingStatus !== "ACTIVE") {
+      return { error: "NOT_ACTIVE" as const };
+    }
     if (parsed.data.status === "ACTIVE" && old.listingStatus !== "SUSPENDED") {
       return { error: "NOT_SUSPENDED" as const };
     }
@@ -46,6 +49,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   });
   if ("error" in result) {
     if (result.error === "NOT_FOUND") return jsonError(404, "LISTING_NOT_FOUND", "Product listing not found.");
+    if (result.error === "NOT_ACTIVE") return jsonError(409, "LISTING_NOT_ACTIVE", "Only published active listings can be suspended by moderation.");
     if (result.error === "NOT_SUSPENDED") return jsonError(409, "LISTING_NOT_SUSPENDED", "Only suspended listings can be restored by moderation.");
     if (result.error === "CONCURRENT_CHANGE") return jsonError(409, "LISTING_CHANGED", "The listing changed during moderation. Refresh and try again.");
     return jsonError(409, "DEPENDENCY_INACTIVE", "Activate the provider and category before restoring this listing.");
