@@ -4,7 +4,7 @@ PNG Marketplace — general-purpose marketplace for goods and services in Papua 
 
 Last updated: 2026-11-01
 
-Status key: **Implemented** = present in main; **Production verified** = owner-confirmed live evidence; **In progress** = implementation on a feature branch; **Planned** = not started; **Partially complete** = some exit criteria remain unverified.
+Status key: **Implemented** = present in main; **Production verified** = owner-confirmed live evidence; **In review** = implemented and validated on a feature branch, awaiting owner review/merge; **In progress** = implementation underway on a feature branch; **Planned** = not started; **Partially complete** = some exit criteria remain unverified.
 
 ## Rules for every phase
 
@@ -21,7 +21,7 @@ Status key: **Implemented** = present in main; **Production verified** = owner-c
 |---|---|---|
 | 1 | Foundation | Implemented; production login and application health checks owner-confirmed; other historical verification items remain open/unconfirmed |
 | 2 | General marketplace data model / provider foundation | Implemented on `main`; provider foundation migration applied and verified in production per owner-confirmed project handover |
-| 3 | Product marketplace | Specification approved; implementation starting on a separate feature branch |
+| 3 | Product marketplace | Implemented and validated on feature branch; draft PR #13 awaiting review and merge approval |
 | 4 | Services marketplace | Planned |
 | 5 | Transactions and trust | Planned |
 | 6 | Business development | Planned |
@@ -65,7 +65,7 @@ Phase 2 exit criteria are considered met for the provider foundation delivered t
 
 ## Phase 3 — Product marketplace
 
-**Status: Approved; implementation in progress on a separate feature branch.**
+**Status: Implemented and validated on a separate feature branch; awaiting owner review/merge approval.**
 
 Specification: `docs/PHASE_3_PRODUCT_MARKETPLACE_SPEC.md`. Implementation plan: `docs/PHASE_3_IMPLEMENTATION_PLAN.md`.
 
@@ -73,7 +73,13 @@ Scope: provider-owned product listings, provider-entered prices and stock, publi
 
 Key guardrails: only ACTIVE providers publish; public results require an ACTIVE listing, ACTIVE provider and ACTIVE category; prices are positive PGK amounts stored as NUMERIC, never estimates; price/stock timestamps change only when their respective values change; provider data is restricted to approved public fields. No checkout, cart, orders, payments, RFQs, commissions, image uploads, variants or price-history subsystem in this phase.
 
-**Release gates:** feature branch only during implementation. No production migration, merge to `main`, or Render deployment without separate owner approval.
+Implementation branch: `feature/phase-3-product-marketplace`
+Draft PR: https://github.com/JennyJoshua/png-materials-marketplace/pull/13
+Validation: 249 tests passed; TypeScript typecheck and Next.js production build passed; Prisma schema validation, full migration application and RLS/grants checks passed on disposable PostgreSQL 16; ESLint passed.
+
+The implemented backend includes provider listing APIs, public category/search/detail APIs, administrator category and listing moderation APIs, strict validation, audit logging and same-origin mutation checks. No new dependencies were added. CI reported 23 advisories in the existing locked dependency tree (16 moderate, 5 high, 2 critical), requiring a separate dependency review before release.
+
+**Release gates:** PR remains draft and unmerged. No production migration, merge to `main`, or Render deployment without separate owner approval.
 
 ## Phase 4 — Services marketplace
 
