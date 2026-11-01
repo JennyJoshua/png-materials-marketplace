@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const m = vi.hoisted(() => ({
   access: vi.fn(), providerFindUnique: vi.fn(), categoryFindFirst: vi.fn(),
-  listingFindMany: vi.fn(), listingFindFirst: vi.fn(), listingCreate: vi.fn(),
+  listingFindMany: vi.fn(), listingCount: vi.fn(), listingFindFirst: vi.fn(), listingCreate: vi.fn(),
   listingUpdateMany: vi.fn(), listingFindUnique: vi.fn(), categoryFindMany: vi.fn(), categoryCreate: vi.fn(),
   audit: vi.fn(), transaction: vi.fn(),
 }));
@@ -23,7 +23,7 @@ vi.mock("@/lib/db/prisma", () => ({
     providerProfile: { findUnique: m.providerFindUnique },
     productCategory: { findFirst: m.categoryFindFirst, findMany: m.categoryFindMany },
     productListing: {
-      findMany: m.listingFindMany, findFirst: m.listingFindFirst,
+      findMany: m.listingFindMany, count: m.listingCount, findFirst: m.listingFindFirst,
       create: m.listingCreate, updateMany: m.listingUpdateMany, findUnique: m.listingFindUnique,
     },
     $transaction: m.transaction,
@@ -36,6 +36,7 @@ import { PATCH as providerPatch } from "@/app/api/providers/products/[id]/route"
 import { GET as adminCategories, POST as adminCategoryCreate } from "@/app/api/admin/categories/route";
 import { PATCH as adminModerate } from "@/app/api/admin/products/[id]/moderation/route";
 import { GET as publicCategories } from "@/app/api/categories/route";
+import { GET as publicSearch } from "@/app/api/products/route";
 
 const user = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -56,7 +57,7 @@ const request = (body: unknown, origin = "https://marketplace.test") =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  m.transaction.mockImplementation(async (operation: (client: typeof tx) => unknown) => operation(tx));
+  m.transaction.mockImplementation(async (operation: unknown) => Array.isArray(operation) ? Promise.all(operation) : (operation as (client: typeof tx) => unknown)(tx));
   m.access.mockResolvedValue({ user });
   m.providerFindUnique.mockResolvedValue(provider);
   m.categoryFindFirst.mockResolvedValue({ id: valid.categoryId });
@@ -166,5 +167,35 @@ describe("Phase 3 administrator controls", () => {
       data: { listingStatus: "SUSPENDED" },
     }));
     expect(m.audit).toHaveBeenCalledOnce();
+  });
+});
+
+describe("Phase 3 public product search", () => {
+  it("applies active visibility, text, location, price and bounded pagination filters", async () => {
+    m.listingFindMany.mockResolvedValue([{ id: "listing-public", name: "Cement", price: "45.50", unit: "bag" }]);
+    m.listingCount.mockResolvedValue(1);
+    const request = new NextRequest("https://marketplace.test/api/products?q=cement&province=Gulf&district=Kerema&minPrice=30.00&maxPrice=60.00&sort=price_asc&page=2&pageSize=10");
+    const response = await publicSearch(request);
+    expect(response.status).toBe(200);
+    const args = m.listingFindMany.mock.calls[0]![0];
+    expect(args.where.listingStatus).toBe("ACTIVE");
+    expect(args.where.category.status).toBe("ACTIVE");
+    expect(args.where.providerProfile.status).toBe("ACTIVE");
+    expect(args.where.providerProfile.province.equals).toBe("Gulf");
+    expect(args.where.providerProfile.district.equals).toBe("Kerema");
+    expect(args.where.OR).toHaveLength(3);
+    expect(args.where.price.gte.toString()).toBe("30");
+    expect(args.where.price.lte.toString()).toBe("60");
+    expect(args.skip).toBe(10);
+    expect(args.take).toBe(10);
+    expect(args.orderBy[0]).toEqual({ price: "asc" });
+  });
+
+  it("rejects inverted price ranges before querying the database", async () => {
+    const request = new NextRequest("https://marketplace.test/api/products?minPrice=80&maxPrice=20");
+    const response = await publicSearch(request);
+    expect(response.status).toBe(400);
+    expect(m.listingFindMany).not.toHaveBeenCalled();
+    expect(m.listingCount).not.toHaveBeenCalled();
   });
 });
