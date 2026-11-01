@@ -1,76 +1,80 @@
 # Project Review
 
-Version: 0.1.0
-Phase: Phase 1 (Foundation)
-Status last updated: 2026-10-25 (stabilisation pass; see docs/PHASE_1_VERIFICATION_REPORT.md)
+Version: 0.2.0  
+Current phase: Phase 3 — Product marketplace  
+Status last updated: 2026-11-01
 
-**Phase 1 status: PARTIALLY COMPLETE**
+**Current overall position:** Phase 1 foundation remains implemented with some historical verification items open; Phase 2 provider foundation is merged to `main` and its production migration was owner-reported as applied and verified; Phase 3 design is approved and implementation is beginning on a separate branch.
 
-This file has two parts. **Current status** is the latest position. **Historical record** is the review of 2026-10-05, kept for history. Where the two disagree, the current status wins.
+This current-status section supersedes stale statements in the historical review below. Historical findings are retained for auditability and must not be treated as current without checking their date and evidence.
 
----
+## Evidence and scope
 
-# Current status (updated 2026-10-25)
+- Repository reviewed: `JennyJoshua/png-materials-marketplace`, `main`.
+- Latest inspected main commit: merge commit `8f4f7a8032e6d6384c0a5e5ebe67346aa7901c21`, merging PR #12, “Fix provider verifier deletion integrity” (2026-11-01).
+- Main contains the Phase 2 provider schema and `prisma/migrations/20261101000000_provider_verifier_integrity/migration.sql`.
+- The owner-confirmed project handover records that the provider migration was applied and verified in production, with `provider_profiles.verified_by_user_id` using ON DELETE RESTRICT and an index. The last reported provider_profiles count was zero; 12 active service categories were seeded.
+- The owner confirmed on 2026-11-01 that production login works after correcting Render's Supabase pooler URL to include the `/postgres` database path, and that subsequent health checks were all good.
+- GitHub repository evidence establishes what is on `main`; it does not by itself prove live database or Render state. Live statements above are explicitly attributed to owner-confirmed reports.
 
-Evidence note: the items marked VERIFIED were checked on the live Supabase database by the project owner and reported on 2026-10-21. They were not produced by this repository's automated tests, and no check output is stored in this repository. Items marked OUTSTANDING or UNCONFIRMED must not be read as done. Observations quoted from the 2026-10-24 handover are marked "reported" and have not been verified by anyone who wrote this file.
+## Phase 1 — Foundation
 
-## Update 2026-10-25 (stabilisation pass)
+**Status: Implemented; partially complete as a verification record.**
 
-The 2026-10-24 handover (`handovers/PHASE_1_COMPLETION_AND_STABILISATION.md`) was executed **without access to Render or Supabase**. Details, evidence tags and test results are in `docs/PHASE_1_VERIFICATION_REPORT.md`.
+The app is deployed and the owner has confirmed successful login and healthy post-fix checks. The earlier live Supabase checks reported in the historical record remain useful but are not a substitute for current evidence.
 
-- **New conflicting evidence, not resolved:** the handover reports that the live `_prisma_migrations` table already holds one completed record for the migration. That conflicts with the 2026-10-21 report below that it is not recorded. See Outstanding item 1.
-- **Code changes, not deployed:** safer behaviour when the database fails after Supabase sign-in succeeds (login, e-mail confirmation callback, protected APIs), logging of profile-recovery failures, a patch-level dependency update, and an environment checker. 38 new automated tests. They are in a ZIP for owner review and have not been merged.
-- **No production change was made.** No migration command was run. `migration.sql` was deliberately **not** edited, because its checksum may already be recorded.
-- Phase 1 remains **PARTIALLY COMPLETE**. Phase 2 has not started.
+Still open or not freshly evidenced in the available record:
+1. Reconcile Phase 1 Prisma migration history against the live `_prisma_migrations` record and migration checksum.
+2. Record a complete live sign-up and email-confirmation test, if not already completed since the earlier review.
+3. Reconfirm remaining Supabase configuration and security findings, including the reported `_prisma_migrations` exposure and leaked-password protection.
+4. Revisit dependency audit, trusted-proxy/IP handling and CSP/password-reset deferrals according to the existing security decision process.
 
-## Completed and verified
+The previous 2026-10-23 “invalid port number” incident is superseded as an active login blocker: the later production failure was traced to a pooler URL missing `/postgres`; the owner corrected it and confirmed login/health checks. Do not re-open or change production configuration without new evidence.
 
-1. The Phase 1 migration SQL (`prisma/migrations/20261005000000_phase1_foundation/migration.sql`) was **applied manually** to the live Supabase PostgreSQL database.
-2. The product-category seed **ran successfully**. Exactly 15 product categories exist and all are ACTIVE: Cement & Concrete, Steel & Reinforcement, Timber, Roofing, Plumbing, Electrical, Paint, Building Boards, Doors & Windows, Fencing, Water & Tanks, Tools, Safety Equipment, General Hardware, Other.
-3. The five Phase 1 public tables are `users`, `customer_profiles`, `supplier_profiles`, `product_categories` and `audit_logs`.
-4. Row Level Security (RLS) was **enabled and checked on all five tables**.
-5. **No RLS policies were created**, and table privileges were **revoked from the `anon` and `authenticated` roles**. This is a default-deny arrangement.
-6. Supabase Auth is configured with email enabled, email confirmation enabled and anonymous sign-ins disabled. The application enforces a minimum password length of 10 characters in its own validation. No other Supabase Auth settings are recorded here.
+**Production safety:** no Phase 1 baseline, migration, reset, db push or other database operation is authorized by this review update.
 
-What items 4 and 5 do not prove: default-deny RLS stops the public Supabase API from reading or writing these tables. It does not on its own prove that the complete application is secure. Server-side authorization, input validation, session handling and secret handling are separate controls, and the live sign-up and sign-in flows are not yet confirmed (see below).
+## Phase 2 — Provider foundation
 
-## Outstanding
+**Status: Implemented on `main`; production migration owner-reported applied and verified.**
 
-1. **Prisma migration-history status: conflicting evidence, to be reconciled.** The owner reported on 2026-10-21 that the migration is not recorded in `_prisma_migrations`. The 2026-10-24 handover reports one completed, non-rolled-back record. Run the read-only checks in `docs/sql/phase1-readonly-checks.sql` (Result 1) and use the decision table in docs/PHASE_1_VERIFICATION_REPORT.md section 5.4. If a record exists and its checksum matches the repository file, **no baseline is needed**. **Only if the check shows no record**, the intended operation (owner approval first, after the read-only checks) is:
+Corrections to the previous review:
+- The old statement that Phase 2 had not started is obsolete.
+- The old statement that the provider foundation was only on `feature/phase-2-provider-foundation` and not merged is obsolete.
+- PRs #11 and #12 were merged to `main`; PR #12 merge commit is `8f4f7a8032e6d6384c0a5e5ebe67346aa7901c21`.
+- Main includes `ProviderProfile`, `ServiceCategory`, provider status/type/verification enums and the verifier-integrity migration.
+- The final verifier integrity migration changes the verifier foreign key to ON DELETE RESTRICT and adds an index. Its migration and schema changes are present in the merged commit.
+- The owner-confirmed deployment record says the provider migration was applied and checked in production. This is reported live evidence, not inferred from the GitHub file alone.
 
-   ```
-   npx prisma migrate resolve --applied 20261005000000_phase1_foundation
-   ```
+Phase 2 does not mean product listings or service listings have been implemented. Legacy supplier profiles were retained; no speculative backfill is claimed.
 
-   It records the existing migration as applied. It is not intended to run the migration SQL again.
-2. **Safe verification of Prisma connectivity and migration status** against the live database, using read-only commands first (procedure in docs/SETUP_SUPABASE.md section 5).
-3. **Live sign-up, email-confirmation and sign-in testing.** These still require confirmation. A proposed test is in the verification report section 9.
-4. **Confirmation of Render deployment and production configuration.**
-5. **`public._prisma_migrations` exposure (reported, not verified):** RLS disabled and `anon`/`authenticated` SELECT. A tested fix and rollback are in the verification report section 6. Needs owner approval; not applied.
-6. **The database URL on Render.** A 2026-10-23 log showed "invalid port number in database URL" with no established cause. Check the current value's structure locally with `node check-env.mjs` (docs/SETUP_RENDER.md section 3). Not changed.
-7. **Owner decisions on the other findings:** the dependency patch update, `X-Forwarded-For` trust, session cookies, a CSP header, leaked-password protection (verification report sections 6 and 11).
+## Phase 3 — Product marketplace
 
-## Unconfirmed in the available evidence
+**Status: Specification approved; implementation beginning on a separate branch.**
 
-- **Render deployment:** its status is unconfirmed. It is not recorded here as completed, and not recorded as definitively outstanding. The evidence available for this update does not settle it.
-- Whether the live `_prisma_migrations` record exists and matches the repository file; whether Render's `DATABASE_URL` is currently valid; the live behaviour of registration, confirmation and sign-in.
-- Not recorded either way: creation of the first administrator, Supabase Site URL and redirect URL configuration, the Supabase-side minimum password length setting.
-- Known open items from the earlier review that are unchanged: dependency audit follow-up, a Content-Security-Policy header, and a password-reset page (a deliberate deferral).
+Approved artifacts:
+- `docs/PHASE_3_PRODUCT_MARKETPLACE_SPEC.md`
+- `docs/PHASE_3_IMPLEMENTATION_PLAN.md`
 
-## Warning: do not rerun the migration on the live database
+Approved scope includes provider-owned product listings, PGK prices, stock status, public browse/search/filter, price comparison, administrator category management and moderation. Listings are public only when the listing, provider and category are all ACTIVE. Prices are provider-entered positive NUMERIC values; no estimated prices. No cart, RFQ, order, checkout, payment, commission, image upload, variant or price-history features in this phase.
 
-Until the Prisma migration history has been reconciled (Outstanding item 1) **and the owner has approved the exact operation**, do not run any of these against the existing live database:
+Implementation/release controls:
+- Work only on a dedicated feature branch based on `main`.
+- Additive migration only; RLS enabled and no permissive public policies; revoke `anon` and `authenticated` table privileges, preserving server-side Prisma access.
+- Preserve all existing models, categories and records.
+- Run tests against a disposable database/environment only. Do not point development migration tools at production.
+- No production migration, merge to `main`, environment change or Render deployment without separate owner approval.
 
-- `prisma migrate deploy`
-- `prisma migrate dev`
-- `prisma migrate reset`
-- `prisma db push`
+## Current validation record
 
-If Prisma's history does not record the migration, `migrate deploy` would try to run the migration SQL again and fail because the objects already exist. `migrate dev`, `migrate reset` and `db push` can change or erase live data. Never use the live database URL as a shadow database.
+- Phase 2 verifier migration: merged; owner-reported applied and verified in production.
+- Production login: owner-confirmed working after pooler URL correction.
+- Post-fix application health checks: owner-confirmed all good.
+- Phase 3 code/schema/migration: not yet validated at the time of this documentation reconciliation.
+- No Phase 3 production database or deployment changes have been made.
 
-## Phase 2
+## Review rule
 
-Phase 2 (General marketplace data model) has **not started**. Product listings, services, quotations, orders, bookings and the other planned marketplace features are not implemented. Per docs/ROADMAP.md, Phase 2 should not begin until the Phase 1 outstanding items are resolved.
+After each major phase, update this document with what worked, what failed, security and performance concerns, UX problems, required architecture changes, test evidence and deferred decisions.
 
 ---
 
