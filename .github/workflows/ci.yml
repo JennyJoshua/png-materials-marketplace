@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - ci/auth-callback-checks-bootstrap
+      - security/dependency-advisory-remediation
   pull_request:
     branches:
       - main
+      - feature/phase-3-product-marketplace
+  workflow_dispatch:
 
 permissions:
   contents: read
