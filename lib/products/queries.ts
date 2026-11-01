@@ -1,14 +1,22 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
-export const publicProductSelect = {
-  id: true, name: true, brand: true, specification: true, description: true,
-  unit: true, price: true, stockStatus: true, priceUpdatedAt: true,
-  stockUpdatedAt: true, updatedAt: true,
+export const publicProductCardSelect = {
+  id: true, name: true, brand: true, unit: true, price: true,
+  stockStatus: true, priceUpdatedAt: true, stockUpdatedAt: true, updatedAt: true,
   category: { select: { id: true, name: true } },
   providerProfile: { select: {
     id: true, displayName: true, province: true, district: true, townOrArea: true,
-    phone: true, publicEmail: true, websiteUrl: true, pickupAvailable: true,
+    verificationLevel: true,
+  } },
+} satisfies Prisma.ProductListingSelect;
+
+export const publicProductSelect = {
+  ...publicProductCardSelect,
+  specification: true, description: true,
+  providerProfile: { select: {
+    id: true, displayName: true, province: true, district: true, townOrArea: true,
+    publicEmail: true, websiteUrl: true, pickupAvailable: true,
     deliveryAvailable: true, verificationLevel: true,
   } },
 } satisfies Prisma.ProductListingSelect;
@@ -52,7 +60,7 @@ export async function findPublicProducts(params: {
     params.sort === "price_asc" ? { price: "asc" } :
     params.sort === "price_desc" ? { price: "desc" } : { updatedAt: "desc" };
   const [items, total] = await prisma.$transaction([
-    prisma.productListing.findMany({ where, orderBy: [orderBy, { id: "asc" }], skip: (params.page - 1) * params.pageSize, take: params.pageSize, select: publicProductSelect }),
+    prisma.productListing.findMany({ where, orderBy: [orderBy, { id: "asc" }], skip: (params.page - 1) * params.pageSize, take: params.pageSize, select: publicProductCardSelect }),
     prisma.productListing.count({ where }),
   ]);
   return { items, pagination: { page: params.page, pageSize: params.pageSize, total, pages: Math.ceil(total / params.pageSize) } };
