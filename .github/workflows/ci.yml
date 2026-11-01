@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - ci/auth-callback-checks-bootstrap
+      - security/dependency-advisory-remediation
   pull_request:
     branches:
       - main
