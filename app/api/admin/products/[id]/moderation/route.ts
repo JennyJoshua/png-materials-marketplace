@@ -15,11 +15,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const result = await prisma.$transaction(async (tx) => {
     const old = await tx.productListing.findUnique({
       where: { id },
-      select: { id: true, listingStatus: true, providerProfile: { select: { status: true } }, category: { select: { status: true } } },
+      select: { id: true, listingStatus: true, updatedAt: true, providerProfile: { select: { status: true } }, category: { select: { status: true } } },
     });
     if (!old) return { error: "NOT_FOUND" as const };
     if (old.listingStatus === parsed.data.status) {
-      return { listing: { id: old.id, listingStatus: old.listingStatus, updatedAt: new Date() }, unchanged: true };
+      return { listing: { id: old.id, listingStatus: old.listingStatus, updatedAt: old.updatedAt }, unchanged: true };
     }
     if (parsed.data.status === "ACTIVE" && old.listingStatus !== "SUSPENDED") {
       return { error: "NOT_SUSPENDED" as const };
