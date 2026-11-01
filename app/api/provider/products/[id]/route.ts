@@ -1,12 +1,14 @@
 import { requireApiAccess } from "@/lib/auth/guards";
 import { getOwnedActiveProvider } from "@/lib/auth/provider-access";
 import { prisma } from "@/lib/db/prisma";
-import { jsonError, jsonOk, readJson } from "@/lib/security/http";
+import { jsonError, jsonOk, readJson, sameOriginError } from "@/lib/security/http";
 import { productListingPatchSchema } from "@/lib/validation/products";
 import { Prisma } from "@prisma/client";
 import { writeAuditLogOrThrow } from "@/lib/security/audit";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const originError = sameOriginError(request);
+  if (originError) return originError;
   const { user, response } = await requireApiAccess();
   if (response) return response;
   const provider = await getOwnedActiveProvider(user);
