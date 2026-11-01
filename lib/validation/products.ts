@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const optionalText = (max: number) =>
-  z.string().trim().max(max).optional().or(z.literal("")).transform((v) => v || undefined);
+  z.string().trim().max(max).optional().or(z.literal("")).transform((v) => v || null);
 
 const price = z.string().trim().regex(/^\d{1,10}(\.\d{1,2})?$/, "Enter a positive price with up to two decimal places.")
   .refine((v) => Number(v) > 0, "Price must be greater than zero.");
