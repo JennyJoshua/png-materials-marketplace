@@ -1,7 +1,6 @@
 // PNG Materials Marketplace - Phase 1 (Foundation) schema.
 //
-// Phase 1 tables ONLY: users, customer_profiles, supplier_profiles, product_categories, audit_logs.
-// Later phases add their own tables and migrations (products, RFQs, quotations, orders, ...).
+// Marketplace foundation and provider models. Later phases add their own additive models and migrations.
 //
 // Authentication lives in Supabase Auth (the Supabase-managed `auth` schema). This schema stores
 // application/profile data only: there is NO password column and NO foreign key to the `auth` schema.
@@ -61,6 +60,20 @@ enum ProviderVerificationLevel {
   UNVERIFIED
   CONTACT_CONFIRMED
   DOCUMENTS_CHECKED
+}
+
+enum ProductStockStatus {
+  IN_STOCK
+  LIMITED_STOCK
+  OUT_OF_STOCK
+  CONTACT_SUPPLIER
+}
+
+enum ProductListingStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
 }
 
 
@@ -133,6 +146,8 @@ model ProductCategory {
   createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  listings    ProductListing[]
+
   @@map("product_categories")
 }
 
@@ -182,6 +197,7 @@ model ProviderProfile {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   verifiedBy User? @relation("ProviderVerifier", fields: [verifiedByUserId], references: [id], onDelete: Restrict)
+  productListings ProductListing[]
   @@index([status, createdAt])
   @@index([verifiedByUserId])
   @@index([verificationLevel])
@@ -198,4 +214,35 @@ model ServiceCategory {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   @@map("service_categories")
+}
+
+
+/// Provider-owned product offer. Public visibility is enforced in server queries:
+/// listing ACTIVE + provider ACTIVE + category ACTIVE. All access uses server Prisma.
+model ProductListing {
+  id             String               @id @default(uuid()) @db.Uuid
+  providerProfileId String             @map("provider_profile_id") @db.Uuid
+  categoryId     String               @map("category_id") @db.Uuid
+  name           String               @db.VarChar(160)
+  brand          String?              @db.VarChar(120)
+  specification  String?              @db.VarChar(500)
+  description    String?
+  unit           String               @db.VarChar(40)
+  price          Decimal              @db.Decimal(12, 2)
+  stockStatus    ProductStockStatus   @default(CONTACT_SUPPLIER) @map("stock_status")
+  listingStatus  ProductListingStatus @default(DRAFT) @map("listing_status")
+  priceUpdatedAt DateTime             @default(now()) @map("price_updated_at") @db.Timestamptz(6)
+  stockUpdatedAt DateTime             @default(now()) @map("stock_updated_at") @db.Timestamptz(6)
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  providerProfile ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  category        ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([providerProfileId, listingStatus])
+  @@index([categoryId, listingStatus])
+  @@index([listingStatus, updatedAt])
+  @@index([price])
+  @@index([name])
+  @@map("product_listings")
 }

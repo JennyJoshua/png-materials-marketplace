@@ -73,9 +73,9 @@ describe("migration: Phase 1 tables and Row Level Security (static validation)",
 describe("Prisma schema", () => {
   const schema = read("prisma/schema.prisma");
 
-  it("declares only the five Phase 1 models", () => {
+  it("declares the foundation, provider and Phase 3 product listing models", () => {
     const models = [...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]);
-    expect(models.sort()).toEqual(["AuditLog", "CustomerProfile", "ProductCategory", "ProviderProfile", "ServiceCategory", "SupplierProfile", "User"]);
+    expect(models.sort()).toEqual(["AuditLog", "CustomerProfile", "ProductCategory", "ProductListing", "ProviderProfile", "ServiceCategory", "SupplierProfile", "User"]);
   });
 
   it("uses the pooled DATABASE_URL at runtime and DIRECT_URL for migrations", () => {
@@ -173,9 +173,10 @@ describe("secrets and client/server separation", () => {
 });
 
 describe("Phase boundary", () => {
-  it("keeps later marketplace transaction and listing routes out of this provider-foundation phase", () => {
+  it("keeps Phase 4 and Phase 5 transaction routes out of Phase 3", () => {
     const routes = walk(path.join(root, "app")).map((f) => rel(f).split(path.sep).join("/"));
-    for (const forbidden of ["products", "rfqs", "quotations", "orders", "projects", "marketplace", "bookings", "payments"]) {
+    expect(routes.some((r) => r.split("/").includes("products"))).toBe(true);
+    for (const forbidden of ["rfqs", "quotations", "orders", "projects", "marketplace", "bookings", "payments"]) {
       expect(routes.some((r) => r.split("/").includes(forbidden)), forbidden).toBe(false);
     }
   });
