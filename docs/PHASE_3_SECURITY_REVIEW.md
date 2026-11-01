@@ -22,7 +22,7 @@ Review status: implementation review in progress; runtime validation pending.
 - Provider item reads and writes are scoped by both listing ID and owned provider profile ID.
 - Administrator category and moderation endpoints require database-authorized ADMIN role via `requireApiAccess(["ADMIN"])`.
 - Public endpoints expose only ACTIVE listings whose provider and category are also ACTIVE.
-- Public provider summary omits internal user IDs, business registration number, street address and other non-public profile fields. Only the provider's designated public contact fields and public location summary are selected.
+- Public provider summary omits internal user IDs, business registration number, street address and other non-public profile fields. The public browse response contains only provider name and public location/verification summary. The detail response may additionally expose the explicitly designated public email and website; private phone, street address, business registration number and internal user identifiers are omitted.
 
 ## Validation and business rules
 
@@ -50,4 +50,4 @@ Review status: implementation review in progress; runtime validation pending.
 5. Add/execute route-level tests for owner isolation, inactive provider/category exclusion, admin-only moderation and audit records.
 6. Inspect the full branch diff and verify no production environment or database was used.
 
-No production migration, deployment, merge or live database access is authorized by this review.
+State-changing API routes also reject cross-origin requests using the existing same-origin Origin / Fetch Metadata checks. Public browse results intentionally omit descriptions and contact fields to keep mobile payloads compact; the detail endpoint returns the extended public summary.\n\nNo production migration, deployment, merge or live database access is authorized by this review.
