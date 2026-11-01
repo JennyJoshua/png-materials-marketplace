@@ -44,9 +44,8 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Show Prisma migration status before deployment
-        run: npx prisma migrate status
-
+      # Do not run migrate status before deployment: Prisma exits non-zero when
+      # committed migrations are pending, which would block migrate deploy.
       - name: Apply pending Prisma migrations
         run: npx prisma migrate deploy
 
