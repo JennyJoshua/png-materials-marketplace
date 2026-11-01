@@ -1,6 +1,6 @@
 import { requireApiAccess } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { jsonError, jsonOk, readJson } from "@/lib/security/http";
+import { jsonError, jsonOk, readJson, sameOriginError } from "@/lib/security/http";
 import { productCategoryInputSchema } from "@/lib/validation/products";
 import { writeAuditLogOrThrow } from "@/lib/security/audit";
 import { Prisma } from "@prisma/client";
@@ -16,6 +16,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const originError = sameOriginError(request);
+  if (originError) return originError;
   const { user, response } = await requireApiAccess(["ADMIN"]);
   if (response) return response;
   const parsed = productCategoryInputSchema.safeParse(await readJson(request));
