@@ -95,7 +95,6 @@ model User {
   supplierProfile SupplierProfile?
   auditLogs       AuditLog[]
   providerProfile ProviderProfile?
-  verifiedProviders ProductListing[] @relation("ProductListingVerifier")
   verifiedProviders ProviderProfile[] @relation("ProviderVerifier")
 
   @@index([role])
