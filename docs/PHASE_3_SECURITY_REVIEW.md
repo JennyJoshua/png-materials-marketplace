@@ -32,7 +32,7 @@ Review status: source security review completed; Prisma schema validation, clien
 - Price and stock timestamps are updated only when the corresponding values actually change.
 - Publication requires an active category and valid price/unit; publication and archive actions are audited.
 - Category changes are audited. Categories are deactivated rather than deleted.
-- Admin moderation requires a reason; only suspended listings may be restored, and restore is blocked if provider/category is inactive.
+- Admin moderation requires a reason; only ACTIVE listings may be suspended, only SUSPENDED listings may be restored, and restore is blocked if provider/category is inactive.
 
 ## Search and exposure controls
 
