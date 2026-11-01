@@ -8,6 +8,8 @@ on:
   pull_request:
     branches:
       - main
+      - feature/phase-3-product-marketplace
+  workflow_dispatch:
 
 permissions:
   contents: read
