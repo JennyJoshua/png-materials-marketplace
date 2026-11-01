@@ -34,18 +34,25 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const priceChanged = parsed.data.price !== undefined && !new Prisma.Decimal(parsed.data.price).equals(existing.price);
   const stockChanged = parsed.data.stockStatus !== undefined && parsed.data.stockStatus !== existing.stockStatus;
 
-  const listing = await prisma.$transaction(async (tx) => {
-    const updated = await tx.productListing.update({
-      where: { id },
+  const result = await prisma.$transaction(async (tx) => {
+    // Conditional update prevents a concurrent administrator suspension/archive from being bypassed.
+    const changed = await tx.productListing.updateMany({
+      where: { id, providerProfileId: provider.id, listingStatus: { in: ["DRAFT", "ACTIVE"] } },
       data: {
         ...parsed.data,
         ...(priceChanged ? { priceUpdatedAt: new Date() } : {}),
         ...(stockChanged ? { stockUpdatedAt: new Date() } : {}),
       },
+    });
+    if (changed.count !== 1) return { error: "LOCKED_OR_MISSING" as const };
+    const updated = await tx.productListing.findUnique({
+      where: { id },
       select: { id: true, name: true, price: true, stockStatus: true, listingStatus: true, priceUpdatedAt: true, stockUpdatedAt: true, updatedAt: true },
     });
+    if (!updated) return { error: "LOCKED_OR_MISSING" as const };
     await writeAuditLogOrThrow(tx, { userId: user.id, action: "PRODUCT_LISTING_UPDATED", resourceType: "product_listing", resourceId: id, metadata: { priceChanged, stockChanged }, request });
-    return updated;
+    return { listing: updated };
   });
-  return jsonOk({ listing });
+  if ("error" in result) return jsonError(409, "LISTING_LOCKED", "This listing is no longer editable.");
+  return jsonOk({ listing: result.listing });
 }
