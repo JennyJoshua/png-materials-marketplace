@@ -4,11 +4,12 @@ import { NextResponse } from "next/server";
 const m = vi.hoisted(() => ({
   access: vi.fn(), providerFindUnique: vi.fn(), categoryFindFirst: vi.fn(),
   listingFindMany: vi.fn(), listingFindFirst: vi.fn(), listingCreate: vi.fn(),
-  listingUpdateMany: vi.fn(), listingFindUnique: vi.fn(), categoryFindMany: vi.fn(),
+  listingUpdateMany: vi.fn(), listingFindUnique: vi.fn(), categoryFindMany: vi.fn(), categoryCreate: vi.fn(),
   audit: vi.fn(), transaction: vi.fn(),
 }));
 
 const tx = {
+  productCategory: { create: m.categoryCreate },
   productListing: {
     create: m.listingCreate,
     updateMany: m.listingUpdateMany,
@@ -32,7 +33,8 @@ vi.mock("@/lib/security/audit", () => ({ writeAuditLogOrThrow: m.audit }));
 
 import { POST as providerCreate } from "@/app/api/providers/products/route";
 import { PATCH as providerPatch } from "@/app/api/providers/products/[id]/route";
-import { GET as adminCategories } from "@/app/api/admin/categories/route";
+import { GET as adminCategories, POST as adminCategoryCreate } from "@/app/api/admin/categories/route";
+import { PATCH as adminModerate } from "@/app/api/admin/products/[id]/moderation/route";
 import { GET as publicCategories } from "@/app/api/categories/route";
 
 const user = {
@@ -125,5 +127,44 @@ describe("Phase 3 public category API", () => {
       select: { id: true, name: true, description: true },
     }));
     expect(m.access).not.toHaveBeenCalled();
+  });
+});
+
+describe("Phase 3 administrator controls", () => {
+  it("creates categories through an audited administrator transaction", async () => {
+    m.access.mockResolvedValue({ user: { ...user, role: "ADMIN" } });
+    m.categoryCreate.mockResolvedValue({ id: "category-new", name: "Timber", description: null, status: "ACTIVE" });
+    const response = await adminCategoryCreate(new Request("https://marketplace.test/api/admin/categories", {
+      method: "POST",
+      headers: { host: "marketplace.test", origin: "https://marketplace.test", "content-type": "application/json" },
+      body: JSON.stringify({ name: "Timber" }),
+    }));
+    expect(response.status).toBe(201);
+    expect(m.categoryCreate.mock.calls[0]![0].data.name).toBe("Timber");
+    expect(m.audit).toHaveBeenCalledOnce();
+  });
+
+  it("audits administrator listing suspension with the supplied reason", async () => {
+    m.access.mockResolvedValue({ user: { ...user, role: "ADMIN" } });
+    m.listingFindUnique
+      .mockResolvedValueOnce({
+        id: "55555555-5555-4555-8555-555555555555", listingStatus: "ACTIVE", updatedAt: new Date(),
+        providerProfile: { status: "ACTIVE" }, category: { status: "ACTIVE" },
+      })
+      .mockResolvedValueOnce({
+        id: "55555555-5555-4555-8555-555555555555", listingStatus: "SUSPENDED", updatedAt: new Date(),
+      });
+    m.listingUpdateMany.mockResolvedValue({ count: 1 });
+    const response = await adminModerate(new Request("https://marketplace.test/api/admin/products/id/moderation", {
+      method: "PATCH",
+      headers: { host: "marketplace.test", origin: "https://marketplace.test", "content-type": "application/json" },
+      body: JSON.stringify({ status: "SUSPENDED", reason: "Duplicate listing" }),
+    }), { params: Promise.resolve({ id: "55555555-5555-4555-8555-555555555555" }) });
+    expect(response.status).toBe(200);
+    expect(m.listingUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "55555555-5555-4555-8555-555555555555", listingStatus: "ACTIVE" },
+      data: { listingStatus: "SUSPENDED" },
+    }));
+    expect(m.audit).toHaveBeenCalledOnce();
   });
 });
