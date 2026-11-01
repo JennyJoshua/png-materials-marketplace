@@ -30,7 +30,7 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 vi.mock("@/lib/security/audit", () => ({ writeAuditLogOrThrow: m.audit }));
 
-import { POST as providerCreate, PATCH as providerUpdate } from "@/app/api/provider/products/route";
+import { POST as providerCreate } from "@/app/api/provider/products/route";
 import { PATCH as providerPatch } from "@/app/api/provider/products/[id]/route";
 import { GET as adminCategories } from "@/app/api/admin/categories/route";
 
