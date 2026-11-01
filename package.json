@@ -4,7 +4,7 @@
   "private": true,
   "description": "Mobile-first marketplace connecting customers, building-material suppliers and administrators in Papua New Guinea. Phase 1 - Foundation (Supabase Auth + Prisma).",
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=20.19.0"
   },
   "scripts": {
     "dev": "next dev",
@@ -45,6 +45,11 @@
     "prisma": "^6.19.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.0"
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "postcss": "8.5.32",
+    "deepmerge-ts": "8.0.2",
+    "vite": "7.3.7"
   }
 }
