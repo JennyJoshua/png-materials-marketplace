@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/phase-3-product-marketplace
+      - security/dependency-advisory-remediation
   pull_request:
     branches:
       - main
