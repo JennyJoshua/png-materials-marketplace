@@ -21,11 +21,11 @@ export const publicProductSelect = {
   } },
 } satisfies Prisma.ProductListingSelect;
 
-export function publicListingWhere() {
+export function publicListingWhere(): Prisma.ProductListingWhereInput {
   return {
     listingStatus: "ACTIVE" as const,
     category: { status: "ACTIVE" as const },
-    providerProfile: { status: "ACTIVE" as const, providerType: { in: ["PRODUCTS", "BOTH"] as const } },
+    providerProfile: { status: "ACTIVE" as const, providerType: { in: ["PRODUCTS", "BOTH"] } },
   };
 }
 
