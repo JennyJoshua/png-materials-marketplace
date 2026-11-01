@@ -1,7 +1,6 @@
 // PNG Materials Marketplace - Phase 1 (Foundation) schema.
 //
-// Phase 1 tables ONLY: users, customer_profiles, supplier_profiles, product_categories, audit_logs.
-// Later phases add their own tables and migrations (products, RFQs, quotations, orders, ...).
+// Marketplace foundation and provider models. Later phases add their own additive models and migrations.
 //
 // Authentication lives in Supabase Auth (the Supabase-managed `auth` schema). This schema stores
 // application/profile data only: there is NO password column and NO foreign key to the `auth` schema.
