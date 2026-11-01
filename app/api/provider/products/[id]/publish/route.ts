@@ -20,7 +20,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!listing) return { error: "NOT_FOUND" as const };
     if (listing.listingStatus === "ARCHIVED" || listing.listingStatus === "SUSPENDED") return { error: "LOCKED" as const };
     if (listing.category.status !== "ACTIVE" || Number(listing.price) <= 0 || !listing.unit.trim()) return { error: "INCOMPLETE" as const };
-    const updated = await tx.productListing.update({ where: { id }, data: { listingStatus: "ACTIVE" }, select: { id: true, listingStatus: true } });
+    const changed = await tx.productListing.updateMany({
+      where: { id, providerProfileId: provider.id, listingStatus: { in: ["DRAFT", "ACTIVE"] } },
+      data: { listingStatus: "ACTIVE" },
+    });
+    if (changed.count !== 1) return { error: "LOCKED" as const };
+    const updated = await tx.productListing.findUnique({ where: { id }, select: { id: true, listingStatus: true } });
+    if (!updated) return { error: "NOT_FOUND" as const };
     await writeAuditLogOrThrow(tx, { userId: user.id, action: "PRODUCT_LISTING_PUBLISHED", resourceType: "product_listing", resourceId: id, request });
     return { listing: updated };
   });
