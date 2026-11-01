@@ -14,13 +14,22 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (provider.providerType === "SERVICES") return jsonError(403, "PRODUCT_PROVIDER_REQUIRED", "Your provider profile is not enabled to list products.");
   const { id } = await context.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return jsonError(404, "LISTING_NOT_FOUND", "Product listing not found.");
-  const listing = await prisma.productListing.findFirst({ where: { id, providerProfileId: provider.id }, select: { id: true, listingStatus: true } });
-  if (!listing) return jsonError(404, "LISTING_NOT_FOUND", "Product listing not found.");
-  if (listing.listingStatus !== "ACTIVE") return jsonError(409, "NOT_PUBLISHED", "Only active listings can be unpublished.");
-  const updated = await prisma.$transaction(async (tx) => {
-    const result = await tx.productListing.update({ where: { id }, data: { listingStatus: "DRAFT" }, select: { id: true, listingStatus: true } });
+  const result = await prisma.$transaction(async (tx) => {
+    const changed = await tx.productListing.updateMany({
+      where: { id, providerProfileId: provider.id, listingStatus: "ACTIVE" },
+      data: { listingStatus: "DRAFT" },
+    });
+    if (changed.count !== 1) {
+      const current = await tx.productListing.findFirst({ where: { id, providerProfileId: provider.id }, select: { listingStatus: true } });
+      if (!current) return { error: "NOT_FOUND" as const };
+      return { error: "NOT_PUBLISHED" as const };
+    }
     await writeAuditLogOrThrow(tx, { userId: user.id, action: "PRODUCT_LISTING_UPDATED", resourceType: "product_listing", resourceId: id, metadata: { action: "UNPUBLISHED" }, request });
-    return result;
+    return { listing: { id, listingStatus: "DRAFT" as const } };
   });
-  return jsonOk({ listing: updated });
+  if ("error" in result) {
+    if (result.error === "NOT_FOUND") return jsonError(404, "LISTING_NOT_FOUND", "Product listing not found.");
+    return jsonError(409, "NOT_PUBLISHED", "Only active listings can be unpublished.");
+  }
+  return jsonOk({ listing: result.listing });
 }
