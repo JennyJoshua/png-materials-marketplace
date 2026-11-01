@@ -29,10 +29,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (parsed.data.status === "ACTIVE" && (old.providerProfile.status !== "ACTIVE" || old.category.status !== "ACTIVE")) {
       return { error: "DEPENDENCY_INACTIVE" as const };
     }
-    const updated = await tx.productListing.update({
-      where: { id }, data: { listingStatus: parsed.data.status },
-      select: { id: true, listingStatus: true, updatedAt: true },
+    const changed = await tx.productListing.updateMany({
+      where: { id, listingStatus: old.listingStatus },
+      data: { listingStatus: parsed.data.status },
     });
+    if (changed.count !== 1) return { error: "CONCURRENT_CHANGE" as const };
+    const updated = await tx.productListing.findUnique({
+      where: { id }, select: { id: true, listingStatus: true, updatedAt: true },
+    });
+    if (!updated) return { error: "NOT_FOUND" as const };
     await writeAuditLogOrThrow(tx, {
       userId: user.id, action: "PRODUCT_LISTING_MODERATED", resourceType: "product_listing", resourceId: id,
       metadata: { oldStatus: old.listingStatus, newStatus: updated.listingStatus, reason: parsed.data.reason }, request,
@@ -42,6 +47,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if ("error" in result) {
     if (result.error === "NOT_FOUND") return jsonError(404, "LISTING_NOT_FOUND", "Product listing not found.");
     if (result.error === "NOT_SUSPENDED") return jsonError(409, "LISTING_NOT_SUSPENDED", "Only suspended listings can be restored by moderation.");
+    if (result.error === "CONCURRENT_CHANGE") return jsonError(409, "LISTING_CHANGED", "The listing changed during moderation. Refresh and try again.");
     return jsonError(409, "DEPENDENCY_INACTIVE", "Activate the provider and category before restoring this listing.");
   }
   return jsonOk({ listing: result.listing });
