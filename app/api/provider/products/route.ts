@@ -10,6 +10,7 @@ export async function GET() {
   if (response) return response;
   const provider = await getOwnedActiveProvider(user);
   if (!provider) return jsonError(403, "ACTIVE_PROVIDER_REQUIRED", "An active provider profile is required.");
+  if (provider.providerType === "SERVICES") return jsonError(403, "PRODUCT_PROVIDER_REQUIRED", "Your provider profile is not enabled to list products.");
   const listings = await prisma.productListing.findMany({
     where: { providerProfileId: provider.id },
     orderBy: { updatedAt: "desc" },
