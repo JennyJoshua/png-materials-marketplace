@@ -30,8 +30,8 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres?schema=public
-      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/postgres?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/postgres
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -44,6 +44,10 @@ jobs:
         run: npm ci
       - name: Validate Prisma schema
         run: npx prisma validate
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
       - name: Create Supabase client roles in disposable PostgreSQL
         run: |
           psql "$DIRECT_URL" -v ON_ERROR_STOP=1 -c 'CREATE ROLE anon NOLOGIN;'
