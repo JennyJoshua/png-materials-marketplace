@@ -1,7 +1,7 @@
 import { requireApiAccess } from "@/lib/auth/guards";
 import { getOwnedActiveProvider } from "@/lib/auth/provider-access";
 import { prisma } from "@/lib/db/prisma";
-import { jsonError, jsonOk, readJson } from "@/lib/security/http";
+import { jsonError, jsonOk, readJson, sameOriginError } from "@/lib/security/http";
 import { productListingInputSchema } from "@/lib/validation/products";
 import { writeAuditLogOrThrow } from "@/lib/security/audit";
 
@@ -21,6 +21,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const originError = sameOriginError(request);
+  if (originError) return originError;
   const { user, response } = await requireApiAccess();
   if (response) return response;
   const provider = await getOwnedActiveProvider(user);
