@@ -4,7 +4,7 @@ Version: 0.2.0
 Current phase: Phase 3 — Product marketplace  
 Status last updated: 2026-11-01
 
-**Current overall position:** Phase 1 foundation remains implemented with some historical verification items open; Phase 2 provider foundation is merged to `main` and its production migration was owner-reported as applied and verified; Phase 3 design is approved and implementation is beginning on a separate branch.
+**Current overall position:** Phase 1 foundation remains implemented with some historical verification items open; Phase 2 provider foundation is merged to `main` and its production migration was owner-reported as applied and verified; Phase 3 backend implementation is complete and validated on a feature branch, with draft PR #13 awaiting owner review. No Phase 3 production migration, merge or deployment has occurred.
 
 This current-status section supersedes stale statements in the historical review below. Historical findings are retained for auditability and must not be treated as current without checking their date and evidence.
 
@@ -49,7 +49,7 @@ Phase 2 does not mean product listings or service listings have been implemented
 
 ## Phase 3 — Product marketplace
 
-**Status: Specification approved; implementation beginning on a separate branch.**
+**Status: Implemented and validated on a separate feature branch; awaiting owner review/merge approval.**
 
 Approved artifacts:
 - `docs/PHASE_3_PRODUCT_MARKETPLACE_SPEC.md`
@@ -57,19 +57,35 @@ Approved artifacts:
 
 Approved scope includes provider-owned product listings, PGK prices, stock status, public browse/search/filter, price comparison, administrator category management and moderation. Listings are public only when the listing, provider and category are all ACTIVE. Prices are provider-entered positive NUMERIC values; no estimated prices. No cart, RFQ, order, checkout, payment, commission, image upload, variant or price-history features in this phase.
 
-Implementation/release controls:
-- Work only on a dedicated feature branch based on `main`.
-- Additive migration only; RLS enabled and no permissive public policies; revoke `anon` and `authenticated` table privileges, preserving server-side Prisma access.
-- Preserve all existing models, categories and records.
-- Run tests against a disposable database/environment only. Do not point development migration tools at production.
-- No production migration, merge to `main`, environment change or Render deployment without separate owner approval.
+Implementation branch: `feature/phase-3-product-marketplace`
+Draft PR: https://github.com/JennyJoshua/png-materials-marketplace/pull/13
+
+Implemented backend:
+- Provider-owned product listing create, list, edit, publish, unpublish and archive APIs.
+- Public active-category list, product search/filter/detail APIs with bounded pagination.
+- Administrator category management and listing moderation.
+- Strict Zod validation, decimal-safe PGK prices, owner isolation, same-origin mutation checks and audit logging.
+
+Validation evidence:
+- 249 tests passed across 23 test files.
+- TypeScript typecheck and Next.js production build passed.
+- Prisma schema validation and client generation passed.
+- All migrations applied to disposable PostgreSQL 16; Phase 3 RLS enabled, no policies, no PUBLIC/anon/authenticated grants, positive-price check and both RESTRICT foreign keys verified.
+- ESLint passed.
+- No production database, Render service or production credentials were used.
+
+Security follow-up: CI reported 23 advisories in the existing locked dependency tree (16 moderate, 5 high, 2 critical). Phase 3 added no dependencies. This requires a separate dependency audit and remediation decision before release.
+
+Release controls:
+- Draft PR only; no merge to `main`.
+- No production migration, environment change or Render deployment without separate owner approval.
 
 ## Current validation record
 
 - Phase 2 verifier migration: merged; owner-reported applied and verified in production.
 - Production login: owner-confirmed working after pooler URL correction.
 - Post-fix application health checks: owner-confirmed all good.
-- Phase 3 code/schema/migration: not yet validated at the time of this documentation reconciliation.
+- Phase 3 schema, migration, RLS/grants, tests, typecheck, lint and production build: validated on the feature branch as recorded above.
 - No Phase 3 production database or deployment changes have been made.
 
 ## Review rule
