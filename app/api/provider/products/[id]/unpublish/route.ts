@@ -9,6 +9,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (response) return response;
   const provider = await getOwnedActiveProvider(user);
   if (!provider) return jsonError(403, "ACTIVE_PROVIDER_REQUIRED", "An active provider profile is required.");
+  if (provider.providerType === "SERVICES") return jsonError(403, "PRODUCT_PROVIDER_REQUIRED", "Your provider profile is not enabled to list products.");
   const { id } = await context.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return jsonError(404, "LISTING_NOT_FOUND", "Product listing not found.");
   const listing = await prisma.productListing.findFirst({ where: { id, providerProfileId: provider.id }, select: { id: true, listingStatus: true } });
