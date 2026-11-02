@@ -37,6 +37,13 @@ describe("Render pull-request preview safety", () => {
     expect(previewBranch).not.toContain("getAppUser");
   });
 
+  it("clearly labels the preview and suppresses sign-in and registration links", () => {
+    const shell = readFileSync("components/AppShell.tsx", "utf8");
+    expect(shell).toContain("Preview version — browsing only");
+    expect(shell).toContain('className="badge">Read-only preview');
+    expect(shell).toContain("isPreview");
+  });
+
   it("applies the preview guard to all application routes, including server actions", () => {
     expect(middleware).toContain('matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"]');
   });
