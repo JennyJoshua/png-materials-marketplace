@@ -1,1 +1,45 @@
-import Link from"next/link";import{AppShell}from"@/components/AppShell";export default function Page(){return <AppShell><section className="home-hero"><p className="eyebrow">Papua New Guinea marketplace</p><h1>Find building materials. Compare supplier prices. Buy with confidence.</h1><p className="hero-copy">Discover products published by hardware stores and suppliers across Papua New Guinea. Compare prices, check availability and contact suppliers directly.</p><div className="hero-actions"><Link href="/products" className="btn">Browse products</Link><Link href="/register" className="btn secondary">Join as a provider</Link></div><p className="hero-note">Free public browsing · Prices in PGK · Confirm stock and terms with suppliers</p></section><section className="home-columns"><article className="panel"><h2>For buyers</h2><p>Search products, compare listed prices and see supplier locations.</p><Link href="/products">Explore marketplace →</Link></article><article className="panel"><h2>For suppliers</h2><p>Create a provider profile, publish products and keep prices and stock current.</p><Link href="/provider/profile">Set up provider profile →</Link></article><article className="panel"><h2>Before you travel</h2><p>Confirm price, availability, delivery and payment arrangements directly with providers.</p></article></section></AppShell>}
+import Link from "next/link";
+import { AppShell } from "@/components/AppShell";
+
+export default function HomePage() {
+  return (
+    <AppShell>
+      <section className="home-hero">
+        <p className="eyebrow">Papua New Guinea marketplace</p>
+        <h1>Find building materials. Compare supplier prices. Buy with confidence.</h1>
+        <p className="hero-copy">
+          Discover products published by hardware stores and suppliers across Papua New Guinea.
+          Compare prices, check availability and contact suppliers directly.
+        </p>
+        <div className="hero-actions">
+          <Link href="/products" className="btn">
+            Browse products
+          </Link>
+          <Link href="/register" className="btn secondary">
+            Join as a provider
+          </Link>
+        </div>
+        <p className="hero-note">
+          Free public browsing · Prices in PGK · Confirm stock and terms with suppliers
+        </p>
+      </section>
+
+      <section className="home-columns">
+        <article className="panel">
+          <h2>For buyers</h2>
+          <p>Search products, compare listed prices and see supplier locations.</p>
+          <Link href="/products">Explore marketplace →</Link>
+        </article>
+        <article className="panel">
+          <h2>For suppliers</h2>
+          <p>Create a provider profile, publish products and keep prices and stock current.</p>
+          <Link href="/provider/profile">Set up provider profile →</Link>
+        </article>
+        <article className="panel">
+          <h2>Before you travel</h2>
+          <p>Confirm price, availability, delivery and payment arrangements directly with providers.</p>
+        </article>
+      </section>
+    </AppShell>
+  );
+}
