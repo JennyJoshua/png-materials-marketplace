@@ -12,6 +12,8 @@ export function AppShell({
   user?: ShellUser;
   children: ReactNode;
 }) {
+  const isPreview = process.env.IS_PULL_REQUEST === "true";
+
   return (
     <>
       <header className="site-header">
@@ -33,6 +35,8 @@ export function AppShell({
                   <button type="submit">Sign out</button>
                 </form>
               </>
+            ) : isPreview ? (
+              <span className="badge">Read-only preview</span>
             ) : (
               <>
                 <Link href="/login">Sign in</Link>
@@ -42,6 +46,11 @@ export function AppShell({
           </nav>
         </div>
       </header>
+      {isPreview ? (
+        <div className="preview-notice" role="status">
+          Preview version — browsing only. Sign-in, supplier workspaces and changes are disabled.
+        </div>
+      ) : null}
       <main>{children}</main>
       <footer className="site-footer">
         PNG Materials Marketplace · Supplier-listed products and prices. Confirm details directly
