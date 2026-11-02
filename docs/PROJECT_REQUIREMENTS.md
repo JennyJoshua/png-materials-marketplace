@@ -965,3 +965,44 @@ End of document.
 ## Phase 2 provider foundation implementation (2026-10-31)
 
 Implemented on the Phase 2 review branch: one provider profile per account; individual/business kind; products/services/both capability; PNG primary location; optional contact/business details; owner create/read/update; admin status and verification controls; separate service categories; additive migration with RLS and client-role revokes. Listings, discovery, bookings, quotes, orders, payments and reviews remain out of scope. `users.role` and public registration roles remain unchanged.
+
+---
+
+# Approved account and public-access model — 2026-11-03
+
+**Status: Approved product decision; implementation not yet applied.** This section supersedes conflicting buyer-account, buyer-portal and customer-registration assumptions elsewhere in this document.
+
+## Account types
+
+1. **Individual provider account** — for a person offering products, services, or both.
+2. **Business provider account** — for a business or organisation offering products, services, or both.
+3. **Administrator account** — privileged, created or granted only through a controlled administrative process.
+
+There is no buyer/customer account type and no public buyer registration.
+
+## Public visitor access
+
+Anyone may browse and search goods and services, view public listings and provider profiles, and compare available information without registration, authentication or a sign-in prompt. A registered provider uses this same public visitor experience when looking for or purchasing goods/services from another provider.
+
+## Provider capabilities
+
+One provider identity may offer products, services, or both. Individual/business is the provider's legal/operating form; products/services/both is the provider's marketplace capability. These are separate dimensions and must not be conflated.
+
+## Guest-first customer actions
+
+Future enquiry, quotation, order and booking flows should be guest-first. They may collect the minimum contact, delivery, location or job details needed to fulfil a specific request, but must not require a reusable buyer account. Providers authenticate to manage their own profiles, listings and provider-side requests. Administrators authenticate for privileged management.
+
+## Data and migration constraints
+
+The current repository contains legacy CUSTOMER role/profile/route concepts. Do not delete customer records, rewrite role enums, alter existing users, or run a live database migration as part of documentation-only work. Before implementation, inspect the exact current schema and deployed data; define backward-compatible handling for existing CUSTOMER accounts and any existing transactions. Prefer additive migration and preserve audit history. No production migration or deployment is authorised by this decision alone.
+
+## Acceptance criteria
+
+- No public buyer/customer registration option.
+- Public catalogue and search work without an authenticated session.
+- Individual and business providers can register and choose products, services or both.
+- Provider-only management functions require provider authentication and ownership checks.
+- A provider can browse and purchase as a public visitor without switching account modes.
+- Guest enquiries and future transaction flows do not require a buyer account by default.
+- Admin privileges cannot be obtained through public registration.
+- Existing records are preserved through any future migration.

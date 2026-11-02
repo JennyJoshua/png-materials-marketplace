@@ -852,3 +852,55 @@ Phase 1 already provides `users`, `customer_profiles`, `supplier_profiles`, `pro
 ## Phase 2 implementation note (2026-10-31)
 
 Provider capability is represented by an optional `provider_profiles` row, independent of `users.role`; CUSTOMER and legacy SUPPLIER accounts can own one profile. Buyer capability remains universal. Server APIs use the existing Supabase `getUser()` plus database-backed guards, then scope owner access by verified `user.id`. Provider status (DRAFT/PENDING_REVIEW/ACTIVE/SUSPENDED) is independent of verification (UNVERIFIED/CONTACT_CONFIRMED/DOCUMENTS_CHECKED). Only ADMIN APIs can change either. No public provider endpoint is introduced.
+
+---
+
+# Part D — Approved account and access decision (2026-11-03)
+
+**Status: Approved product direction. This supersedes any conflicting proposed buyer-account model in Part C.**
+
+## D1. Public visitor is the default marketplace user
+
+Goods and services discovery is public. Browsing, searching, viewing listings, comparing offers and viewing public provider profiles require no account and no sign-in. A provider who wishes to buy from another provider uses this same public visitor experience.
+
+There is no buyer/customer registration, buyer account or buyer dashboard.
+
+## D2. Registration is provider-only
+
+The only public account-registration choices are:
+
+- **Individual provider** — an individual offering products, services or both.
+- **Business provider** — a business/organisation offering products, services or both.
+
+The provider's form (individual/business) is distinct from the provider's marketplace capability (products/services/both). One provider account and provider profile can support both goods and services.
+
+Administrators are privileged accounts created or granted through a controlled process; they are not publicly registerable.
+
+## D3. Guest-first enquiries and transactions
+
+Future enquiries, quotation requests, orders and bookings should be guest-first. Collect only the contact and fulfilment details necessary for the specific interaction. Do not require customers to create a reusable account by default. Provider management and administrator operations remain authenticated and server-authorised.
+
+## D4. Technical implementation boundary
+
+The existing main-branch implementation still contains CUSTOMER/SUPPLIER role logic and customer-profile/dashboard elements. This approved product decision does not itself change that code or production data. A separate implementation change must:
+
+1. Map provider registration to the existing provider foundation and individual/business provider kinds.
+2. Remove buyer/customer from public registration and customer-facing protected application flows.
+3. Preserve ADMIN restrictions and provider ownership checks.
+4. Keep public goods/services discovery accessible without authentication.
+5. Review legacy CUSTOMER users, customer profile rows and any transaction references before changing enums or removing routes. Preserve records and audit history; do not perform destructive conversion or deletion.
+6. Add tests for public access, provider registration, unauthorised provider management, admin restrictions and guest-first interactions.
+7. Use a reviewed additive migration; no production database migration or deployment without owner approval.
+
+## D5. Acceptance criteria
+
+- A visitor can browse and search without an account.
+- A visitor cannot register as a buyer/customer.
+- A person can register as an individual provider.
+- A business can register as a business provider.
+- Either provider kind can offer products, services or both under one provider identity.
+- Providers can browse and purchase as ordinary public visitors without signing in as buyers.
+- Provider management requires authentication and server-side ownership checks.
+- Administrator access remains restricted.
+- Future customer-side enquiries and transaction steps are guest-first by default.
+- Existing customer-related data is preserved pending an explicit migration plan.

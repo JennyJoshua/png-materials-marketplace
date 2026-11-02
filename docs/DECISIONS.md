@@ -635,3 +635,31 @@ Prisma records a checksum of the migration file. If the live history already hol
 ## Phase 2 provider foundation decision (2026-10-31)
 
 Use one optional provider profile per user, with provider capability separate from `users.role`; retain CUSTOMER/SUPPLIER/ADMIN unchanged. Keep status separate from verification. Preserve `supplier_profiles` and all historical rows; do not auto-map legacy verification because PENDING/VERIFIED/SUSPENDED does not establish equivalent provider state or evidence level. Use primary province/district/town only; multi-area coverage is deferred. New tables are server-Prisma-only with RLS enabled and no anon/authenticated grants or policies.
+
+---
+
+# DEC-026 — Provider-only registration and public visitor marketplace
+
+**Date:** 2026-11-03  
+**Status:** Approved product decision
+
+**Decision**
+
+The marketplace is public by default. Anyone may browse, search, compare goods and services, and view public provider profiles without registering or signing in. There is no buyer/customer registration, buyer account or buyer dashboard.
+
+Public registration is exclusively for:
+
+1. Individual providers.
+2. Business providers.
+
+Each provider may offer products, services or both under one provider identity. Provider form (individual/business) is separate from marketplace capability (products/services/both). A registered provider who wants to purchase from another provider uses the ordinary public visitor experience without signing in as a buyer.
+
+Future customer enquiries, quotation requests, orders and bookings should be guest-first and collect only the minimum details needed for the specific interaction. Provider management and administrator operations remain authenticated and server-authorised. ADMIN is never publicly selectable.
+
+**Reason**
+
+This removes friction for customers, avoids unnecessary personal-data collection and makes the marketplace accessible to the general public, including users who do not want to create accounts. Provider accounts exist to manage offers, not to gate customer discovery or purchasing.
+
+**Implementation constraints**
+
+The existing repository contains legacy CUSTOMER/SUPPLIER roles and customer profile/dashboard code. This decision does not authorise deletion or conversion of existing records. Implementation must inspect deployed data, preserve legacy records and audit history, use a reviewed migration, and test provider-only registration plus public guest access. No production migration, merge or deployment is authorised by this decision.
