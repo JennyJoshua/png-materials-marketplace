@@ -24,7 +24,7 @@ vi.mock("@/lib/security/audit", () => ({ writeAuditLogOrThrow: mocks.audit }));
 import { GET as ownerGet, POST as ownerPost, PATCH as ownerPatch } from "@/app/api/providers/me/route";
 import { GET as adminGet, PATCH as adminPatch } from "@/app/api/admin/providers/route";
 
-const user = { id: "owner-1", status: "ACTIVE", role: "CUSTOMER", email: "private@example.test", fullName: "Owner", phone: null, createdAt: new Date() };
+const user = { id: "owner-1", status: "ACTIVE", role: "SUPPLIER", email: "private@example.test", fullName: "Owner", phone: null, createdAt: new Date() };
 const payload = { displayName: "Test Provider", providerKind: "INDIVIDUAL", providerType: "SERVICES", province: "Gulf", deliveryAvailable: false, pickupAvailable: false };
 const req = (body: unknown) => new Request("https://example.test/api", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
