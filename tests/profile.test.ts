@@ -17,7 +17,13 @@ const customerSeed: ProfileSeed = {
   emailConfirmed: false,
 };
 
-const providerSeed: ProfileSeed = {\n  ...customerSeed,\n  role: "SUPPLIER",\n  provider: { displayName: "Jane Kila Services", providerKind: "INDIVIDUAL", providerType: "BOTH", province: "Gulf" },\n};\n\nconst supplierSeed: ProfileSeed = {
+const providerSeed: ProfileSeed = {
+  ...customerSeed,
+  role: "SUPPLIER",
+  provider: { displayName: "Jane Kila Services", providerKind: "INDIVIDUAL", providerType: "BOTH", province: "Gulf" },
+};
+
+const supplierSeed: ProfileSeed = {
   ...customerSeed,
   role: "SUPPLIER",
   supplier: { businessName: "Highlands Hardware", businessAddress: "Section 12", location: "Mount Hagen" },
@@ -111,7 +117,15 @@ describe("idempotency", () => {
     expect(db.state.customerProfiles).toHaveLength(1);
   });
 
-  it("running twice creates exactly one user and one profile (provider)", async () => {\n    const db = createFakeDb();\n    await ensureProfile(providerSeed, db);\n    await ensureProfile(providerSeed, db);\n    expect(db.state.users).toHaveLength(1);\n    expect(db.state.providerProfiles).toHaveLength(1);\n  });\n\n  it("running twice creates exactly one user and one profile (legacy supplier)", async () => {
+  it("running twice creates exactly one user and one profile (provider)", async () => {
+    const db = createFakeDb();
+    await ensureProfile(providerSeed, db);
+    await ensureProfile(providerSeed, db);
+    expect(db.state.users).toHaveLength(1);
+    expect(db.state.providerProfiles).toHaveLength(1);
+  });
+
+  it("running twice creates exactly one user and one profile (legacy supplier)", async () => {
     const db = createFakeDb();
     await ensureProfile(supplierSeed, db);
     await ensureProfile(supplierSeed, db);
