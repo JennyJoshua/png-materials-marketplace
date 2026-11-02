@@ -17,6 +17,11 @@ describe("middleware (first line of defence)", () => {
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe(`https://app.test/login?next=${encodeURIComponent(path)}`);
   });
+  it("allows public marketplace pages without refreshing or requiring a session", async () => {
+    const res = await middleware(at("/products"));
+    expect(res.status).toBe(200);
+    expect(h.updateSession).not.toHaveBeenCalled();
+  });
   it("redirects the retired customer dashboard to public browsing without sign-in", async () => {
     const res = await middleware(at("/customer/dashboard"));
     expect(res.status).toBe(307);
