@@ -1,7 +1,7 @@
 # Provider-only accounts and public marketplace access
 
 **Decision date:** 3 November 2026  
-**Status:** Approved product direction; this branch records the decision and implementation requirements.  
+**Status:** Approved product direction; application implementation is being developed on `feature/provider-only-registration-public-marketplace`.  
 **Repository:** JennyJoshua/png-materials-marketplace
 
 ## Decision
