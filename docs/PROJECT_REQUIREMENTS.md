@@ -19,7 +19,7 @@ Every capability is tagged by status:
 
 Scope-change note (2026-10-21): the project began as "PNG Materials Marketplace", a marketplace for building materials. It is now planned as a general-purpose marketplace for goods and services in Papua New Guinea. Building materials remain an important first category. This change is documentation only: no application code, database schema, migration, dependency, authentication logic or GitHub Actions workflow was changed.
 
-Phase 1 reality: only Phase 1 (Foundation) is implemented: registration, login, logout, three role dashboards and the database foundation (five tables). Everything else in this document is planned. Authentication is handled by Supabase Auth: the application never stores or hashes passwords. The architecture is GitHub, Render, Next.js, Supabase (Auth, PostgreSQL, Storage) with Prisma as the ORM. See ARCHITECTURE.md, DECISIONS.md and ROADMAP.md. Phase 1 is recorded as PARTIALLY COMPLETE in REVIEW.md; its outstanding validation and deployment work is listed in ROADMAP.md.
+Foundation reality: Supabase Auth handles credentials and sessions; the database stores application profiles and roles. Public registration is provider-only (individual or business), while public browsing does not require an account. The legacy CUSTOMER role and customer records remain for compatibility, but buyer registration and the customer dashboard are retired. Provider profiles and goods marketplace functionality are implemented in later phases; see ARCHITECTURE.md, DECISIONS.md and ROADMAP.md for current status. Phase 1 verification and deployment notes remain in REVIEW.md.
 
 This document has two parts.
 
