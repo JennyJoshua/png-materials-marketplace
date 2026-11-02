@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { customerForm, jsonRequest, supabaseUser, supplierForm } from "./helpers";
+import { businessProviderForm, customerForm, individualProviderForm, jsonRequest, supabaseUser } from "./helpers";
 
 const h = vi.hoisted(() => ({
   auth: {
@@ -57,119 +57,115 @@ beforeEach(() => {
 });
 
 describe("POST /api/auth/register", () => {
-  it("registers a customer; Supabase Auth owns the password; e-mail confirmation (no session) is handled", async () => {
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+  it("registers an individual provider; Supabase Auth owns the password; email confirmation is handled", async () => {
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     expect(res.status).toBe(201);
     expect((await res.json()).data).toEqual({ needsEmailConfirmation: true });
-
-    const signUpArgs = h.auth.signUp.mock.calls[0]![0];
-    expect(signUpArgs.email).toBe("jane@example.com");
-    expect(signUpArgs.password).toBe(customerForm.password); // handed to Supabase Auth only
-    expect(JSON.stringify(signUpArgs.options.data)).not.toMatch(/role|password/i);
-
-    expect(h.admin.updateUserById).toHaveBeenCalledWith(newAuthUser.id, { app_metadata: { registration_type: "CUSTOMER" } });
-    expect(h.ensureProfile).toHaveBeenCalledWith(
-      expect.objectContaining({ authUserId: newAuthUser.id, role: "CUSTOMER", emailConfirmed: false }),
-    );
+    const args = h.auth.signUp.mock.calls[0]![0];
+    expect(args.email).toBe("jane@example.com");
+    expect(args.password).toBe(individualProviderForm.password);
+    expect(JSON.stringify(args.options.data)).not.toMatch(/role|password/i);
+    expect(args.options.data).toMatchObject({ provider_kind: "INDIVIDUAL", provider_type: "BOTH", province: "Gulf" });
+    expect(h.admin.updateUserById).toHaveBeenCalledWith(newAuthUser.id, { app_metadata: { registration_type: "SUPPLIER" } });
+    expect(h.ensureProfile).toHaveBeenCalledWith(expect.objectContaining({
+      authUserId: newAuthUser.id, role: "SUPPLIER", emailConfirmed: false,
+      provider: { displayName: "Jane Kila Services", providerKind: "INDIVIDUAL", providerType: "BOTH", province: "Gulf" },
+    }));
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "USER_REGISTERED" }));
   });
 
-  it("works when Supabase returns a session (confirmation disabled) and points to the dashboard", async () => {
-    h.auth.signUp.mockResolvedValue({
-      data: { user: supabaseUser(), session: { access_token: "x" } },
-      error: null,
-    });
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
-    expect((await res.json()).data).toEqual({ needsEmailConfirmation: false, redirectTo: "/customer/dashboard" });
+  it("redirects a confirmed provider to the provider workspace", async () => {
+    h.auth.signUp.mockResolvedValue({ data: { user: supabaseUser(), session: { access_token: "x" } }, error: null });
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
+    expect((await res.json()).data).toEqual({ needsEmailConfirmation: false, redirectTo: "/supplier/dashboard" });
     expect(h.ensureProfile).toHaveBeenCalledWith(expect.objectContaining({ emailConfirmed: true }));
   });
 
-  it("registers a supplier with business details", async () => {
-    const res = await register(jsonRequest("/api/auth/register", { body: supplierForm }));
+  it("registers a business provider and records its provider kind and capability", async () => {
+    const res = await register(jsonRequest("/api/auth/register", { body: businessProviderForm }));
     expect(res.status).toBe(201);
-    expect(h.admin.updateUserById).toHaveBeenCalledWith(expect.anything(), { app_metadata: { registration_type: "SUPPLIER" } });
-    expect(h.ensureProfile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        role: "SUPPLIER",
-        supplier: { businessName: "Highlands Hardware", businessAddress: "Section 12, Kagamuga Road", location: "Mount Hagen" },
-      }),
-    );
+    expect(h.ensureProfile).toHaveBeenCalledWith(expect.objectContaining({
+      role: "SUPPLIER",
+      provider: { displayName: "Highlands Hardware", providerKind: "BUSINESS", providerType: "PRODUCTS", province: "Western Highlands" },
+    }));
   });
 
-  it("rejects a client-supplied role field and creates nothing", async () => {
-    const res = await register(jsonRequest("/api/auth/register", { body: { ...customerForm, role: "ADMIN" } }));
+  it("rejects buyer/customer registration", async () => {
+    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
     expect(res.status).toBe(400);
-    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
     expect(h.auth.signUp).not.toHaveBeenCalled();
     expect(h.ensureProfile).not.toHaveBeenCalled();
   });
 
+  it("rejects a client-supplied role field", async () => {
+    const res = await register(jsonRequest("/api/auth/register", { body: { ...individualProviderForm, role: "ADMIN" } }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
+    expect(h.auth.signUp).not.toHaveBeenCalled();
+  });
+
   it("does not allow ADMIN as an account type", async () => {
-    const res = await register(jsonRequest("/api/auth/register", { body: { ...customerForm, accountType: "ADMIN" } }));
+    const res = await register(jsonRequest("/api/auth/register", { body: { ...individualProviderForm, accountType: "ADMIN" } }));
     expect(res.status).toBe(400);
     expect(h.auth.signUp).not.toHaveBeenCalled();
   });
 
   it("returns field errors for mismatched passwords", async () => {
-    const res = await register(jsonRequest("/api/auth/register", { body: { ...customerForm, confirmPassword: "different" } }));
+    const res = await register(jsonRequest("/api/auth/register", { body: { ...individualProviderForm, confirmPassword: "different" } }));
     expect(res.status).toBe(400);
     expect((await res.json()).error.fields.confirmPassword).toBe("Passwords do not match.");
   });
 
-  it("rejects cross-origin and origin-less requests (CSRF)", async () => {
-    const cross = await register(jsonRequest("/api/auth/register", { body: customerForm, origin: "https://evil.example" }));
-    expect(cross.status).toBe(403);
-    const none = await register(jsonRequest("/api/auth/register", { body: customerForm, origin: null }));
-    expect(none.status).toBe(403);
+  it("rejects cross-origin and origin-less requests", async () => {
+    expect((await register(jsonRequest("/api/auth/register", { body: individualProviderForm, origin: "https://evil.example" }))).status).toBe(403);
+    expect((await register(jsonRequest("/api/auth/register", { body: individualProviderForm, origin: null }))).status).toBe(403);
     expect(h.auth.signUp).not.toHaveBeenCalled();
   });
 
-  it("answers an already-registered e-mail exactly like a new one and creates no profile", async () => {
+  it("answers an already-registered email exactly like a new one and creates no profile", async () => {
     h.auth.signUp.mockResolvedValue({ data: { user: supabaseUser({ identities: [] }), session: null }, error: null });
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     expect(res.status).toBe(201);
     expect((await res.json()).data).toEqual({ needsEmailConfirmation: true });
     expect(h.ensureProfile).not.toHaveBeenCalled();
     expect(h.admin.updateUserById).not.toHaveBeenCalled();
   });
 
-  it("returns a generic error (no Supabase internals) when sign-up fails", async () => {
+  it("returns a generic error when Supabase sign-up fails", async () => {
     h.auth.signUp.mockResolvedValue({ data: { user: null, session: null }, error: { code: "unexpected_failure", message: "db password=hunter2 leaked" } });
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     const text = JSON.stringify(await res.json());
     expect(res.status).toBe(400);
     expect(text).not.toContain("hunter2");
   });
 
-  it("Auth user created but profile creation fails: still succeeds, failure is audited, sign-in will recover", async () => {
+  it("audits a failed provider profile creation and permits recovery", async () => {
     h.ensureProfile.mockRejectedValue(new Error("db down"));
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     expect(res.status).toBe(201);
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "PROFILE_CREATE_FAILED" }));
     expect(h.audit).not.toHaveBeenCalledWith(expect.objectContaining({ action: "USER_REGISTERED" }));
   });
 
-  it("fails loudly when neither the profile nor the recovery hint could be saved", async () => {
+  it("fails when neither the provider profile nor its recovery hint can be saved", async () => {
     h.ensureProfile.mockRejectedValue(new Error("db down"));
     h.admin.updateUserById.mockResolvedValue({ error: { message: "nope" } });
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     expect(res.status).toBe(500);
     expect((await res.json()).error.code).toBe("SETUP_INCOMPLETE");
   });
 
   it("rate-limits repeated sign-ups per IP", async () => {
     let last: Response | undefined;
-    for (let i = 0; i < 6; i++) {
-      last = await register(jsonRequest("/api/auth/register", { body: customerForm, headers: { "x-forwarded-for": "203.0.113.9" } }));
-    }
+    for (let i = 0; i < 6; i++) last = await register(jsonRequest("/api/auth/register", { body: individualProviderForm, headers: { "x-forwarded-for": "203.0.113.9" } }));
     expect(last!.status).toBe(429);
     expect(last!.headers.get("retry-after")).toBeTruthy();
   });
 
   it("never echoes the password or secrets in the response", async () => {
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     const text = await res.text();
-    expect(text).not.toContain(customerForm.password);
+    expect(text).not.toContain(individualProviderForm.password);
     expect(text).not.toContain("service-role");
   });
 });
@@ -186,12 +182,12 @@ describe("POST /api/auth/login", () => {
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "USER_LOGIN_FAILED" }));
   });
 
-  it("signs a customer in and returns their role home", async () => {
+  it("keeps legacy customer sign-in but returns the public marketplace", async () => {
     h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
     h.syncAppUser.mockResolvedValue(appUser("CUSTOMER"));
     const res = await login(jsonRequest("/api/auth/login", { body: goodLogin }));
     expect(res.status).toBe(200);
-    expect((await res.json()).data.redirectTo).toBe("/customer/dashboard");
+    expect((await res.json()).data.redirectTo).toBe("/products");
     expect(h.auth.signInWithPassword).toHaveBeenCalledWith({ email: "jane@example.com", password: "correct horse 42" });
     expect(h.userUpdate).toHaveBeenCalled();
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "USER_LOGIN" }));
