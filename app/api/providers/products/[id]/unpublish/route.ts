@@ -7,7 +7,7 @@ import { writeAuditLogOrThrow } from "@/lib/security/audit";
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const originError = sameOriginError(request);
   if (originError) return originError;
-  const { user, response } = await requireApiAccess();
+  const { user, response } = await requireApiAccess(["SUPPLIER"]);
   if (response) return response;
   const provider = await getOwnedActiveProvider(user);
   if (!provider) return jsonError(403, "ACTIVE_PROVIDER_REQUIRED", "An active provider profile is required.");
