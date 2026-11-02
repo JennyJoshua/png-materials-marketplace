@@ -157,7 +157,7 @@ describe("failure and recovery", () => {
   it("rejects a supplier without business details and leaves no partial user", async () => {
     const db = createFakeDb();
     await expect(ensureProfile({ ...supplierSeed, supplier: undefined }, db)).rejects.toMatchObject({
-      code: "SUPPLIER_DETAILS_MISSING",
+      code: "PROVIDER_DETAILS_MISSING",
     });
     expect(db.state.users).toHaveLength(0);
   });
