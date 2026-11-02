@@ -1,16 +1,28 @@
 # Project Review
 
 Version: 0.1.0
-Phase: Phase 1 (Foundation)
-Status last updated: 2026-10-25 (stabilisation pass; see docs/PHASE_1_VERIFICATION_REPORT.md)
+Current phase: Phase 4 — Marketplace experience (in progress)
+Status last updated: 2026-11-02 (Phase 4 review; historical Phase 1 record retained below)
 
-**Phase 1 status: PARTIALLY COMPLETE**
+**Historical Phase 1 status: PARTIALLY COMPLETE (record retained below)**
 
-This file has two parts. **Current status** is the latest position. **Historical record** is the review of 2026-10-05, kept for history. Where the two disagree, the current status wins.
+This file preserves the Phase 1 review and its historical evidence. The current project status and Phase 4 review are recorded at the end of this file. The Phase 1-only notes below must not be interpreted as the current overall project phase.
 
 ---
 
-# Current status (updated 2026-10-25)
+
+
+# Current project status (updated 2026-11-02)
+
+- **Phase 1 — Foundation:** implemented; the older Phase 1 verification record remains below for audit history.
+- **Phase 2 — Provider foundation:** implemented and merged.
+- **Phase 3 — Product marketplace backend:** merged and deployed; the owner applied and verified the production migration and confirmed the deployed app is functioning.
+- **Phase 4 — Marketplace experience:** under review in draft PR #15 on `feature/phase-4-marketplace-experience`. Scope includes public product catalogue/search/filtering, product details, provider listing management and launch presentation.
+- No Phase 4 database migration, production data change, Supabase setting, Render setting, merge to `main` or production deployment has been performed.
+
+The historical Phase 1 outstanding items and status statements below were accurate for that earlier review period. They do not override the later Phase 2/3 completion and production evidence summarized above.
+
+# Historical Phase 1 status record (updated 2026-10-25; retained for audit history)
 
 Evidence note: the items marked VERIFIED were checked on the live Supabase database by the project owner and reported on 2026-10-21. They were not produced by this repository's automated tests, and no check output is stored in this repository. Items marked OUTSTANDING or UNCONFIRMED must not be read as done. Observations quoted from the 2026-10-24 handover are marked "reported" and have not been verified by anyone who wrote this file.
 
