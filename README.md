@@ -6,7 +6,11 @@ A mobile-first web app (PWA-ready) that is planned to connect people and organis
 
 Building materials were the starting point and remain an important category. The project is now planned as a wider marketplace for goods **and** services. The scope was expanded on 2026-10-21; that change is documentation only.
 
-**Current version:** 0.1.0, **Phase 1: Foundation**. This is an account and database foundation, not a working marketplace yet. Nothing about products, services, quotations, orders or bookings is built.
+**Current version:** 0.1.0. Current delivery stage: Phase 4 — Marketplace experience.
+
+
+
+> **Current implementation status — 2 November 2026 (supersedes older phase-status statements below):** Phases 1 and 2 are implemented. The Phase 3 product-marketplace backend is deployed and its production migration was verified by the project owner. Phase 4 is being developed on `feature/phase-4-marketplace-experience`; the draft PR adds the public catalogue, product details, provider listing workspace and launch presentation. The deployed application was confirmed functioning by the owner. Current agreed roadmap: Phase 4 marketplace experience; Phase 5 enquiries and quotations; Phase 6 orders and transaction management; Phase 7 trust and reputation; Phase 8 payments/business tools (deferred pending PNG suitability and approval); Phase 9 expansion and intelligent services.
 
 ## Who it serves
 
@@ -28,15 +32,15 @@ Phase 1 still uses the original roles (Customer, Supplier, Admin). How the accou
 
 | | |
 |---|---|
-| **Implemented (Phase 1)** | Customer and supplier registration; sign in and sign out; email-confirmation handling; three role dashboards (`/customer/dashboard`, `/supplier/dashboard`, `/admin/dashboard`) that show account details and a "coming later" notice; server-side role checks; five database tables with Row Level Security; category seed; audit-log foundation; basic rate limiting; security headers; tests |
+| **Implemented (Phases 1–3)** | Authentication and profiles; provider foundation; product listing backend, public APIs, provider management APIs and administrator moderation. Phase 3 is deployed and its production migration was verified by the owner. |
 | **Verified (live Supabase, reported by the project owner 2026-10-21)** | The Phase 1 migration SQL was applied manually; the category seed ran (exactly 15 ACTIVE product categories); Row Level Security was enabled and checked on all five Phase 1 tables, with no policies and `anon`/`authenticated` privileges revoked (default-deny). Supabase Auth: email and email confirmation enabled, anonymous sign-ins disabled |
-| **Outstanding (Phase 1)** | Reconcile Prisma's migration history (evidence conflicts: the 2026-10-21 report said the migration was not recorded; the 2026-10-24 handover reports a completed record; a read-only check is prepared in `docs/sql/phase1-readonly-checks.sql`); safe verification of Prisma connectivity; live sign-up, email-confirmation and sign-in testing; confirmation of Render deployment and production configuration (status unconfirmed); owner decisions on security findings (`docs/PHASE_1_VERIFICATION_REPORT.md`) |
-| **Planned (Phases 2 to 6)** | General marketplace data model; product marketplace (listings, prices, search, comparison); services marketplace (service listings, areas, enquiries, bookings); quotations, orders and bookings, notifications, reviews and complaints; business development options |
+| **Phase 4 (in progress)** | Public catalogue, search/filtering, product detail pages, provider listing workspace and launch polish. See the current roadmap and draft PR. |
+| **Planned (Phases 5–9)** | Customer enquiries and supplier quotations; orders and transaction management; trust/reputation; payments and business tools (deferred pending PNG suitability); expansion and intelligent services. |
 | **Future** | Online payments (after evaluation for Papua New Guinea), delivery marketplace, AI material suggestions, price intelligence, multi-supplier checkout, provider subscriptions and featured listings (options to evaluate) |
 
-Not implemented yet: product listings, service listings, search, price comparison, provider profiles beyond the Phase 1 supplier profile, enquiries, quotation requests (RFQs), quotations, orders, bookings, reviews, complaints, provider verification, payments, delivery, AI features, a password-reset page, and an administrator screen beyond read-only account counts. Dashboard tiles for these are labelled "Not available yet" and are not links.
+Not implemented in the current release: customer enquiries and quotations, orders, bookings, reviews, complaints/disputes, payments, delivery workflows and AI features. Product listings, provider profiles, product search and price comparison are implemented; Phase 4 completes their public-facing experience.
 
-**Verification status:** Phase 1 is **PARTIALLY COMPLETE**, not fully complete. The migration SQL was applied to the live Supabase database manually. Whether Prisma's migration history records it is **under reconciliation** because two reports conflict. Live sign-up, email confirmation and sign-in testing and the Render deployment still need confirmation, and a database-URL error seen in a Render log on 2026-10-23 has no established cause. Default-deny RLS on the five tables does not on its own prove that the complete application is secure. The current position is in `docs/REVIEW.md` ("Current status"), `docs/PHASE_1_VERIFICATION_REPORT.md` and `docs/ROADMAP.md`. Phase 2 has not started.
+**Current verification status:** The owner confirmed that the deployed Render application is functioning. The Phase 3 production migration was applied and verified by the owner. Older Phase 1 verification details remain in `docs/REVIEW.md` and `docs/PHASE_1_VERIFICATION_REPORT.md` as historical records; they should not be interpreted as the current project phase.
 
 ## Architecture
 
@@ -62,18 +66,21 @@ No microservices. See `docs/ARCHITECTURE.md` for the design and `docs/DECISIONS.
 
 ## Development phases
 
-1. **Foundation** (implemented; partially complete)
-2. General marketplace data model (design first)
-3. Product marketplace
-4. Services marketplace
-5. Transactions and trust
-6. Business development
+1. **Foundation** — implemented.
+2. **Provider foundation** — implemented.
+3. **Product marketplace backend** — implemented and deployed.
+4. **Marketplace experience** — in progress.
+5. **Customer enquiries and supplier quotations** — planned.
+6. **Orders and transaction management** — planned.
+7. **Trust, verification and reputation** — planned.
+8. **Payments and business tools** — deferred pending PNG suitability assessment and owner approval.
+9. **Expansion and intelligent services** — future.
 
-Phases are built one after another, not at the same time. Each phase needs its own specification, adds its own database tables and migration, and has its own tests. Do not start a later phase without a separate specification. Dependencies and exit criteria are in `docs/ROADMAP.md`.
+Phases are built sequentially, with a separate specification, tests and owner approval gates for production changes.
 
 ## Local development
 
-**Requirements:** Node.js 20.9 or newer, npm, a Supabase project (see below).
+**Requirements:** Node.js 20.19 or newer, npm, a Supabase project (see below).
 
 ```bash
 git clone https://github.com/JennyJoshua/png-materials-marketplace.git
@@ -132,7 +139,7 @@ npm start           # run the production build
 
 ## Deployment target
 
-Render web service connected to this GitHub repository, using Supabase for Auth, PostgreSQL and Storage. Steps are in **`docs/SETUP_RENDER.md`**. Deployment status is unconfirmed in the available evidence: this README does not record it as completed or as definitively outstanding.
+Render web service connected to this GitHub repository, using Supabase for Auth and PostgreSQL. The owner confirmed that the deployed application is functioning. Production configuration and deployment changes remain approval-gated. Steps are in **`docs/SETUP_RENDER.md`**.
 
 ## Security rules
 

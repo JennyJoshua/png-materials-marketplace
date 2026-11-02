@@ -1,16 +1,28 @@
 # Project Review
 
 Version: 0.1.0
-Phase: Phase 1 (Foundation)
-Status last updated: 2026-10-25 (stabilisation pass; see docs/PHASE_1_VERIFICATION_REPORT.md)
+Current phase: Phase 4 — Marketplace experience (in progress)
+Status last updated: 2026-11-02 (Phase 4 review; historical Phase 1 record retained below)
 
-**Phase 1 status: PARTIALLY COMPLETE**
+**Historical Phase 1 status: PARTIALLY COMPLETE (record retained below)**
 
-This file has two parts. **Current status** is the latest position. **Historical record** is the review of 2026-10-05, kept for history. Where the two disagree, the current status wins.
+This file preserves the Phase 1 review and its historical evidence. The current project status and Phase 4 review are recorded at the end of this file. The Phase 1-only notes below must not be interpreted as the current overall project phase.
 
 ---
 
-# Current status (updated 2026-10-25)
+
+
+# Current project status (updated 2026-11-02)
+
+- **Phase 1 — Foundation:** implemented; the older Phase 1 verification record remains below for audit history.
+- **Phase 2 — Provider foundation:** implemented and merged.
+- **Phase 3 — Product marketplace backend:** merged and deployed; the owner applied and verified the production migration and confirmed the deployed app is functioning.
+- **Phase 4 — Marketplace experience:** under review in draft PR #15 on `feature/phase-4-marketplace-experience`. Scope includes public product catalogue/search/filtering, product details, provider listing management and launch presentation.
+- No Phase 4 database migration, production data change, Supabase setting, Render setting, merge to `main` or production deployment has been performed.
+
+The historical Phase 1 outstanding items and status statements below were accurate for that earlier review period. They do not override the later Phase 2/3 completion and production evidence summarized above.
+
+# Historical Phase 1 status record (updated 2026-10-25; retained for audit history)
 
 Evidence note: the items marked VERIFIED were checked on the live Supabase database by the project owner and reported on 2026-10-21. They were not produced by this repository's automated tests, and no check output is stored in this repository. Items marked OUTSTANDING or UNCONFIRMED must not be read as done. Observations quoted from the 2026-10-24 handover are marked "reported" and have not been verified by anyone who wrote this file.
 
@@ -193,3 +205,39 @@ After each major phase, update this document with what worked, what failed, secu
 ## Phase 2 branch review status (2026-10-31)
 
 A provider-foundation implementation is on `feature/phase-2-provider-foundation`. Review branch only; migration not applied to any database and no live RLS, Supabase or Render settings changed. See `handovers/PHASE_2_PROVIDER_FOUNDATION_REPORT.md` for validation evidence and limitations.
+
+## Phase 4 development update (2026-11-02)
+
+Phase 4 implementation is underway on `feature/phase-4-marketplace-experience`, based on the verified Phase 3 merge commit `2965523ee61e7e642ea78de0febc52c26bebce45`. This branch adds a public product catalogue, public product detail pages, provider listing management UI, homepage/navigation updates and Phase 4 interface tests. It reuses the existing Phase 3 APIs and visibility/ownership checks. No database migration, production setting, production data or deployment was changed as part of this work. Release remains subject to owner approval.
+
+
+## Phase 4 review follow-up (2026-11-02)
+
+A second review identified and corrected three user-facing issues before release:
+
+- The catalogue's Clear filters action now submits explicit empty filter values rather than relying on a delayed state update.
+- Provider listing submission is guarded against repeated taps while a save is in progress.
+- Supplier verification labels now distinguish `CONTACT_CONFIRMED` from `DOCUMENTS_CHECKED`; unverified profiles are not described as verified.
+
+The README and roadmap were updated additively so earlier project and Phase 1 history remains available, while current phase status is explicit. No Prisma schema, migration, production data, Supabase setting or Render setting was changed.
+
+GitHub Actions on the reviewed branch confirmed the disposable-PostgreSQL migration/RLS/grant validation passed. CI tests and type-check also passed; the production build was still running at the time of this note. Final CI status must be checked before the pull request is considered ready for merge.
+
+
+## Phase 4 CI completion (2026-11-02)
+
+GitHub Actions completed successfully on implementation commit `8e4a9fdd30a300cf27aa47252b08efe7e3b48e0b`: 24 test files / 257 tests passed; TypeScript type-check passed; Next.js production build passed and included `/products`, `/products/[id]` and `/provider/products`. The separate Phase 3 database validation workflow also passed using disposable PostgreSQL, applying migrations and checking RLS, grants, constraints and relationships. These are CI/disposable-database checks, not a production database migration or live production smoke test.
+
+The subsequent commit `0dad6207389fb0c6643b45b7339d010220e6376d` only adds this review record. PR #15 remains a draft and is not merged or deployed.
+
+
+## Phase 4 accessibility, privacy and final CI review (2026-11-02)
+
+- Catalogue and provider workspace components were reformatted for maintainability. React hook loaders now use stable callbacks; the final CI build produced no React hook lint warnings.
+- Keyboard focus styling and 44px controls are inherited from the existing global styles. Catalogue controls have visible labels, loading state and live result count; pagination is named; provider action buttons include the listing name in their accessible labels.
+- Public product details show the provider's explicitly public phone/email and broad location fields, but do not expose the provider street address or the account email.
+- Homepage wording was adjusted to avoid implying a platform purchase guarantee. Product results are labelled as marketplace listings because stock states include out-of-stock items.
+
+Final GitHub Actions checks on commit `88da963cb8c16555a766c95bd121c6ba5af4fc01` completed successfully: 24 test files / **259 tests passed**; TypeScript type-check passed; Next.js production build passed; and disposable-PostgreSQL migration/RLS/grant/constraint validation plus Prisma client generation and ESLint passed. These checks do not replace manual browser testing on different screen sizes, assistive-technology testing, or a live production smoke test.
+
+PR #15 remains a draft review branch. No merge, production database operation, Supabase configuration change, Render configuration change or production deployment was performed.

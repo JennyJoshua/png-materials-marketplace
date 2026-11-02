@@ -2,9 +2,9 @@
 
 PNG Marketplace (repository: png-materials-marketplace)
 
-Last updated: 2026-10-21 (scope expansion; documentation only)
+Last updated: 2026-11-02 (current phase status reconciled)
 
-This roadmap plans a general-purpose marketplace for goods and services in Papua New Guinea. Building materials remain an important first category. Nothing beyond Phase 1 exists yet.
+This roadmap covers the general-purpose marketplace for goods and services in Papua New Guinea. Building materials remain the first product category. The current phase sequence below supersedes earlier planning labels and status notes retained later in this file.
 
 Status key: Implemented, Planned, Proposed (a recommendation awaiting approval).
 
@@ -16,7 +16,23 @@ Status key: Implemented, Planned, Proposed (a recommendation awaiting approval).
 - Tests are written with each phase. A phase is finished only when its features work, its tests pass, and its status in docs/REVIEW.md is updated honestly.
 - Payments, delivery marketplace and AI features stay deferred unless a later decision changes that.
 
-## Status summary
+## Current agreed phase sequence (2 November 2026)
+
+| Phase | Scope | Status |
+|---|---|---|
+| 1 | Foundation | Implemented |
+| 2 | Provider foundation | Implemented |
+| 3 | Product marketplace backend | Implemented and deployed; production migration verified by owner |
+| 4 | Marketplace experience and launch polish | In progress on `feature/phase-4-marketplace-experience` |
+| 5 | Customer enquiries and supplier quotations | Planned |
+| 6 | Orders and transaction management | Planned |
+| 7 | Trust, verification and reputation | Planned |
+| 8 | Payments and business tools | Deferred pending PNG suitability assessment and explicit approval |
+| 9 | Expansion and intelligent services | Future |
+
+The current Phase 4 scope is public product browsing, search/filtering, product details, provider listing management and launch presentation. Enquiries, quotations, orders and payments are not part of Phase 4.
+
+## Historical status summary (superseded)
 
 | Phase | Name | Status |
 |---|---|---|
@@ -26,6 +42,10 @@ Status key: Implemented, Planned, Proposed (a recommendation awaiting approval).
 | 4 | Services marketplace | Planned. Not started |
 | 5 | Transactions and trust | Planned. Not started |
 | 6 | Business development | Planned. Not started |
+
+## Historical phase design notes (superseded by the current sequence above)
+
+The original phase descriptions below are retained for decision history. Their old status statements and phase numbering are not the current implementation plan.
 
 ## Dependencies
 
