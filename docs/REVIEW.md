@@ -229,3 +229,15 @@ GitHub Actions on the reviewed branch confirmed the disposable-PostgreSQL migrat
 GitHub Actions completed successfully on implementation commit `8e4a9fdd30a300cf27aa47252b08efe7e3b48e0b`: 24 test files / 257 tests passed; TypeScript type-check passed; Next.js production build passed and included `/products`, `/products/[id]` and `/provider/products`. The separate Phase 3 database validation workflow also passed using disposable PostgreSQL, applying migrations and checking RLS, grants, constraints and relationships. These are CI/disposable-database checks, not a production database migration or live production smoke test.
 
 The subsequent commit `0dad6207389fb0c6643b45b7339d010220e6376d` only adds this review record. PR #15 remains a draft and is not merged or deployed.
+
+
+## Phase 4 accessibility, privacy and final CI review (2026-11-02)
+
+- Catalogue and provider workspace components were reformatted for maintainability. React hook loaders now use stable callbacks; the final CI build produced no React hook lint warnings.
+- Keyboard focus styling and 44px controls are inherited from the existing global styles. Catalogue controls have visible labels, loading state and live result count; pagination is named; provider action buttons include the listing name in their accessible labels.
+- Public product details show the provider's explicitly public phone/email and broad location fields, but do not expose the provider street address or the account email.
+- Homepage wording was adjusted to avoid implying a platform purchase guarantee. Product results are labelled as marketplace listings because stock states include out-of-stock items.
+
+Final GitHub Actions checks on commit `88da963cb8c16555a766c95bd121c6ba5af4fc01` completed successfully: 24 test files / **259 tests passed**; TypeScript type-check passed; Next.js production build passed; and disposable-PostgreSQL migration/RLS/grant/constraint validation plus Prisma client generation and ESLint passed. These checks do not replace manual browser testing on different screen sizes, assistive-technology testing, or a live production smoke test.
+
+PR #15 remains a draft review branch. No merge, production database operation, Supabase configuration change, Render configuration change or production deployment was performed.
