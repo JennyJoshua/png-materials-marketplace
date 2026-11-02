@@ -11,7 +11,7 @@ export function AccountPanel({ user }: { user: AppUser }) {
         <dd>{user.email}</dd>
         <dt>Role</dt>
         <dd>
-          <span className="badge">{user.role}</span>
+          <span className="badge">{user.role === "SUPPLIER" ? "PROVIDER" : user.role}</span>
         </dd>
         <dt>Status</dt>
         <dd>{user.status}</dd>
