@@ -36,6 +36,20 @@ const emptyForm = {
 
 type ListingForm = typeof emptyForm;
 
+const listingStatusLabels: Record<string, string> = {
+  DRAFT: "Draft",
+  ACTIVE: "Published",
+  SUSPENDED: "Suspended by administrator",
+  ARCHIVED: "Archived",
+};
+
+const stockStatusLabels: Record<string, string> = {
+  IN_STOCK: "In stock",
+  LIMITED_STOCK: "Limited stock",
+  OUT_OF_STOCK: "Out of stock",
+  CONTACT_SUPPLIER: "Contact supplier",
+};
+
 async function requestJson(url: string, init?: RequestInit) {
   const response = await fetch(url, {
     ...init,
@@ -288,8 +302,9 @@ export function ProviderProducts() {
               <p className="eyebrow">{listing.category.name}</p>
               <h3>{listing.name}</h3>
               <p>{listing.price} PGK / {listing.unit}</p>
+              <p className="muted">Stock: {stockStatusLabels[listing.stockStatus] || listing.stockStatus}</p>
               <span className={"badge " + (listing.listingStatus === "ACTIVE" ? "gold" : "")}>
-                {listing.listingStatus}
+                {listingStatusLabels[listing.listingStatus] || listing.listingStatus}
               </span>
             </div>
 
