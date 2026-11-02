@@ -67,15 +67,15 @@ describe("validation", () => {
 
   it("rejects ADMIN, unknown account types and extra role fields", () => {
     expect(registerSchema.safeParse({ accountType: "ADMIN", ...base }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "CUSTOMER", ...base, role: "ADMIN" }).success).toBe(false);
+    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", role: "ADMIN" }).success).toBe(false);
   });
 
   it("enforces password rules, matching confirmation and valid e-mail/phone", () => {
-    expect(registerSchema.safeParse({ accountType: "CUSTOMER", ...base, password: "short1", confirmPassword: "short1" }).success).toBe(false);
+    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", password: "short1", confirmPassword: "short1" }).success).toBe(false);
     expect(registerSchema.safeParse({ accountType: "CUSTOMER", ...base, password: "nodigitshere", confirmPassword: "nodigitshere" }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "CUSTOMER", ...base, confirmPassword: "different11" }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "CUSTOMER", ...base, email: "not-an-email" }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "CUSTOMER", ...base, phone: "abc" }).success).toBe(false);
+    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", confirmPassword: "different11" }).success).toBe(false);
+    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", email: "not-an-email" }).success).toBe(false);
+    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", phone: "abc" }).success).toBe(false);
   });
 
   it("login schema rejects unknown fields such as role", () => {
@@ -101,7 +101,7 @@ describe("routing helpers", () => {
   });
 
   it("never sends a user to another role's area after login", () => {
-    expect(postLoginPath("CUSTOMER", "/admin/dashboard")).toBe("/customer/dashboard");
+    expect(postLoginPath("CUSTOMER", "/admin/dashboard")).toBe("/products");\n    expect(postLoginPath("CUSTOMER", "/customer/dashboard")).toBe("/products");
     expect(postLoginPath("ADMIN", "/admin/dashboard")).toBe("/admin/dashboard");
     expect(postLoginPath("SUPPLIER", "https://evil.example")).toBe("/supplier/dashboard");
   });
