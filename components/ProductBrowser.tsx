@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Category = { id: string; name: string };
 type Product = {
@@ -64,16 +64,7 @@ export function ProductBrowser() {
     };
   }, []);
 
-  async function load(
-    targetPage = 1,
-    filters: Filters = {
-      q: query,
-      cat: categoryId,
-      province,
-      stock: stockStatus,
-      sort,
-    },
-  ) {
+  const load = useCallback(async (targetPage: number, filters: Filters) => {
     setBusy(true);
     setError("");
 
@@ -106,13 +97,12 @@ export function ProductBrowser() {
     } finally {
       setBusy(false);
     }
-  }
+  }, []);
 
   // Load the initial catalogue once; subsequent loads are user initiated.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    void load();
-  }, []);
+    void load(1, { q: "", cat: "", province: "", stock: "", sort: "newest" });
+  }, [load]);
 
   function clearFilters() {
     setQuery("");
@@ -129,7 +119,7 @@ export function ProductBrowser() {
         className="filter-panel"
         onSubmit={(event) => {
           event.preventDefault();
-          void load(1);
+          void load(1, { q: query, cat: categoryId, province, stock: stockStatus, sort });
         }}
       >
         <label>
@@ -210,7 +200,7 @@ export function ProductBrowser() {
       {error ? (
         <p className="alert" role="alert">
           {error}{" "}
-          <button className="text-button" type="button" onClick={() => void load(page)}>
+          <button className="text-button" type="button" onClick={() => void load(page, { q: query, cat: categoryId, province, stock: stockStatus, sort })}>
             Retry
           </button>
         </p>
@@ -263,7 +253,7 @@ export function ProductBrowser() {
             className="btn secondary"
             type="button"
             disabled={page === 1}
-            onClick={() => void load(page - 1)}
+            onClick={() => void load(page - 1, { q: query, cat: categoryId, province, stock: stockStatus, sort })}
           >
             Previous
           </button>
@@ -274,7 +264,7 @@ export function ProductBrowser() {
             className="btn secondary"
             type="button"
             disabled={page === pages}
-            onClick={() => void load(page + 1)}
+            onClick={() => void load(page + 1, { q: query, cat: categoryId, province, stock: stockStatus, sort })}
           >
             Next
           </button>
