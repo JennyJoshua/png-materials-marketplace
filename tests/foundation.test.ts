@@ -51,33 +51,29 @@ describe("audit metadata", () => {
 
 describe("validation", () => {
   const base = { fullName: "Jenny Joshua", email: "  Jenny@Example.COM ", phone: "+675 7000 0000", password: "longenough1", confirmPassword: "longenough1" };
+  const individual = { accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf" };
 
-  it("normalises e-mail and accepts a valid customer", () => {
-    const parsed = registerSchema.safeParse({ accountType: "CUSTOMER", ...base });
+  it("normalises email and accepts an individual provider", () => {
+    const parsed = registerSchema.safeParse(individual);
     expect(parsed.success).toBe(true);
     if (parsed.success) expect(parsed.data.email).toBe("jenny@example.com");
   });
-
-  it("accepts a supplier only with business details", () => {
+  it("accepts a business provider and rejects buyer registration", () => {
+    expect(registerSchema.safeParse({ accountType: "BUSINESS_PROVIDER", ...base, displayName: "Highlands Hardware", providerType: "PRODUCTS", province: "Western Highlands" }).success).toBe(true);
+    expect(registerSchema.safeParse({ accountType: "CUSTOMER", ...base }).success).toBe(false);
     expect(registerSchema.safeParse({ accountType: "SUPPLIER", ...base }).success).toBe(false);
-    expect(
-      registerSchema.safeParse({ accountType: "SUPPLIER", ...base, businessName: "Highlands Hardware", businessAddress: "Section 4, Mt Hagen", location: "Western Highlands" }).success,
-    ).toBe(true);
   });
-
   it("rejects ADMIN, unknown account types and extra role fields", () => {
     expect(registerSchema.safeParse({ accountType: "ADMIN", ...base }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", role: "ADMIN" }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...individual, role: "ADMIN" }).success).toBe(false);
   });
-
-  it("enforces password rules, matching confirmation and valid e-mail/phone", () => {
-    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", password: "short1", confirmPassword: "short1" }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "CUSTOMER", ...base, password: "nodigitshere", confirmPassword: "nodigitshere" }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", confirmPassword: "different11" }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", email: "not-an-email" }).success).toBe(false);
-    expect(registerSchema.safeParse({ accountType: "INDIVIDUAL_PROVIDER", ...base, displayName: "Jenny Joshua", providerType: "BOTH", province: "Gulf", phone: "abc" }).success).toBe(false);
+  it("enforces password rules, matching confirmation and valid email/phone", () => {
+    expect(registerSchema.safeParse({ ...individual, password: "short1", confirmPassword: "short1" }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...individual, password: "nodigitshere", confirmPassword: "nodigitshere" }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...individual, confirmPassword: "different11" }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...individual, email: "not-an-email" }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...individual, phone: "abc" }).success).toBe(false);
   });
-
   it("login schema rejects unknown fields such as role", () => {
     expect(loginSchema.safeParse({ email: "a@b.co", password: "x" }).success).toBe(true);
     expect(loginSchema.safeParse({ email: "a@b.co", password: "x", role: "ADMIN" }).success).toBe(false);
