@@ -65,13 +65,13 @@ The application database stores only application data: who the user is inside th
 
 The authoritative role is `users.role` in the application database.
 
-The role is never taken from the browser, a form, a query string, a request body or Supabase `user_metadata`. Registration accepts only CUSTOMER or SUPPLIER; ADMIN cannot be chosen (the request schema is strict, so a `role` field is a validation error). Admin is granted by a controlled manual step (docs/SETUP_SUPABASE.md).
+The role is never taken from the browser, a form, a query string, a request body or Supabase `user_metadata`. Public registration accepts only INDIVIDUAL_PROVIDER or BUSINESS_PROVIDER. Both map to the existing SUPPLIER database role; `provider_profiles.provider_kind` distinguishes INDIVIDUAL from BUSINESS and `provider_type` distinguishes PRODUCTS, SERVICES or BOTH. CUSTOMER remains only for legacy records and is not publicly registerable. ADMIN cannot be chosen (the request schema is strict, so a `role` field is a validation error). Admin is granted by a controlled manual step (docs/SETUP_SUPABASE.md).
 
 `app_metadata.registration_type` is written only by trusted server code with the service-role key. It is used for one thing: rebuilding a profile whose creation failed (A6). It is never used to grant access and ADMIN can never be recovered from it.
 
 ## A5. Request authorization (defence in depth)
 
-1. **Middleware** (`middleware.ts`) refreshes the Supabase session cookies and verifies the identity with `getUser()`. Signed-out requests to `/customer/*`, `/supplier/*` and `/admin/*` are redirected to `/login?next=...`. Middleware cannot query the database, so it does **not** decide roles.
+1. **Middleware** (`middleware.ts`) refreshes the Supabase session cookies for protected `/supplier/*` and `/admin/*` areas. The retired `/customer/*` area redirects to public `/products` without authentication. Public marketplace routes do not require a Supabase session. Middleware cannot query the database, so it does **not** decide roles.
 2. **Server pages** call `requirePageRole()` and **API routes** call `requireApiAccess()` (`lib/auth/guards.ts`). These verify identity with `getUser()` (never `getSession()`), load the authoritative role and status from the database, and redirect (pages) or return 401/403 (APIs).
 3. **No id in the URL.** `GET /api/users/me` takes no id; the user is always the verified identity.
 
@@ -82,7 +82,7 @@ Rate limiting: a small in-memory limiter protects register and login (see A9 for
 ## A6. Registration flow (Option A: server-side profile creation)
 
     Browser form -> POST /api/auth/register
-      1. same-origin check, rate limit, strict validation (CUSTOMER or SUPPLIER only)
+      1. same-origin check, rate limit, strict validation (INDIVIDUAL_PROVIDER or BUSINESS_PROVIDER only)
       2. supabase.auth.signUp()          Supabase owns the password; sends the confirmation email
       3. admin client writes app_metadata.registration_type (service-role key, server only)
       4. ensureProfile()                 idempotent, one transaction, keyed by the Supabase UUID
@@ -91,7 +91,7 @@ Rate limiting: a small in-memory limiter protects register and login (see A9 for
 - It never depends on `signUp()` returning a session, so it works with email confirmation turned on (no session until the link is clicked).
 - If the email already exists, Supabase returns an obfuscated user with no identities; the route answers exactly as for a new sign-up, so the form cannot be used to discover registered emails.
 - **Recovery (Option B safety net):** if step 4 fails, the Auth user still exists. On the next sign-in or when the confirmation link opens `/auth/callback`, `syncAppUser()` rebuilds the profile from the trusted hint. A user whose profile cannot be built is signed out and told setup is incomplete.
-- `ensureProfile()` is idempotent: running it twice creates one user and one profile, and it never changes an existing role.
+- `ensureProfile()` is idempotent: running it twice creates one user and one provider profile, and it never changes an existing role. New provider registrations do not create legacy `customer_profiles` or `supplier_profiles` rows. Legacy customer and supplier profile recovery remains supported.
 
 ## A7. Row Level Security
 
@@ -741,7 +741,7 @@ Server-side check order for any protected request: who is the user (`getUser()`)
 - Whether `supplier_profiles` is generalised into a provider profile, or a new table is added alongside it.
 - Names and routes for the buyer and provider areas. The current routes (`/customer/*`, `/supplier/*`, `/admin/*`) stay until then.
 - Changes to the guards and to the audit actions.
-- How the existing registration choice (Customer or Supplier) is presented once providers can be of three types.
+- Resolved by approved decision DEC-026: public registration choices are Individual Provider and Business Provider; provider capability is Products, Services or Both.
 
 ### Risks to design against
 
