@@ -4,6 +4,7 @@ import { roleForPath } from "@/lib/roles";
 
 const isPullRequestPreview = process.env.IS_PULL_REQUEST === "true";
 const privateApiPrefixes = ["/api/providers", "/api/admin", "/api/customer", "/api/supplier"];
+const privatePagePrefixes = ["/provider"];
 const authPagePrefixes = ["/login", "/register", "/auth"];
 function isWithin(pathname: string, prefix: string) { return pathname === prefix || pathname.startsWith(prefix + "/"); }
 
@@ -13,7 +14,7 @@ export async function middleware(request: NextRequest) {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return NextResponse.json({ success: false, error: { code: "PREVIEW_READ_ONLY", message: "This pull-request preview is read-only. Sign-in and changes are disabled." } }, { status: 403 });
     }
-    if (roleForPath(pathname) || privateApiPrefixes.some(prefix => isWithin(pathname, prefix)) || authPagePrefixes.some(prefix => isWithin(pathname, prefix))) {
+    if (roleForPath(pathname) || privatePagePrefixes.some(prefix => isWithin(pathname, prefix)) || privateApiPrefixes.some(prefix => isWithin(pathname, prefix)) || authPagePrefixes.some(prefix => isWithin(pathname, prefix))) {
       return NextResponse.redirect(new URL("/products", request.url));
     }
     return NextResponse.next();
@@ -22,7 +23,7 @@ export async function middleware(request: NextRequest) {
   // The buyer dashboard is retired. Legacy customer data is retained, but all visitors use public browsing.
   if (isWithin(pathname, "/customer")) return NextResponse.redirect(new URL("/products", request.url));
 
-  // Public browsing, search and listing pages do not require a Supabase session.
+  // Only protected application areas need a verified Supabase session refresh. Public browsing and search do not.
   if (!roleForPath(pathname)) return NextResponse.next();
   const { response, user } = await updateSession(request);
   if (!user) {
