@@ -96,7 +96,7 @@ export function RegisterForm() {
             Business provider
           </label>
         </fieldset>
-        <label>Contact person's full name<input name="fullName" autoComplete="name" required {...field("fullName")} /><FieldError id="fullName-error" message={errors.fullName} /></label>
+        <label>Contact person&apos;s full name<input name="fullName" autoComplete="name" required {...field("fullName")} /><FieldError id="fullName-error" message={errors.fullName} /></label>
         <label>{accountType === "BUSINESS_PROVIDER" ? "Business / public provider name" : "Public provider name"}
           <input name="displayName" autoComplete={accountType === "BUSINESS_PROVIDER" ? "organization" : "name"} required {...field("displayName")} />
           <FieldError id="displayName-error" message={errors.displayName} />
