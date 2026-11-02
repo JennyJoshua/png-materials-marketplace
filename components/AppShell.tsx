@@ -39,7 +39,7 @@ export function AppShell({ user, children }: { user?: ShellUser; children: React
           </nav>
         </div>
       </header>
-      {isPreview ? <div className="preview-notice" role="status">Preview version — public browsing only. Sign-in and changes are disabled.</div> : null}
+      {isPreview ? <div className="preview-notice" role="status">Preview version — browsing only. Public marketplace browsing is enabled; sign-in and changes are disabled.</div> : null}
       <main>{children}</main>
       <footer className="site-footer">
         PNG Materials Marketplace · Public goods discovery and provider-listed prices. Confirm details directly with providers.
