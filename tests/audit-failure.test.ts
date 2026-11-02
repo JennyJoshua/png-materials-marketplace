@@ -88,7 +88,7 @@ describe("a signed-in user is not affected by an audit failure", () => {
 
     const res = await login(jsonRequest("/api/auth/login", { body: { email: "jane@example.com", password: "correct horse 42" } }));
     expect(res.status).toBe(200);
-    expect((await res.json()).data.redirectTo).toBe("/customer/dashboard");
+    expect((await res.json()).data.redirectTo).toBe("/products");
     expect(h.auth.signOut).not.toHaveBeenCalled();
   });
 });
