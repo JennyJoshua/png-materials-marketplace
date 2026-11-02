@@ -68,12 +68,12 @@ describe("authentication gate", () => {
 describe("role authorization (server-side, database role)", () => {
   it("CUSTOMER cannot open the SUPPLIER dashboard", async () => {
     signedInAs("CUSTOMER");
-    await expect(requirePageRole("SUPPLIER", "/supplier/dashboard")).rejects.toThrow("REDIRECT:/customer/dashboard");
+    await expect(requirePageRole("SUPPLIER", "/supplier/dashboard")).rejects.toThrow("REDIRECT:/products");
   });
 
   it("CUSTOMER cannot open the ADMIN dashboard", async () => {
     signedInAs("CUSTOMER");
-    await expect(requirePageRole("ADMIN", "/admin/dashboard")).rejects.toThrow("REDIRECT:/customer/dashboard");
+    await expect(requirePageRole("ADMIN", "/admin/dashboard")).rejects.toThrow("REDIRECT:/products");
   });
 
   it("SUPPLIER cannot open the ADMIN dashboard", async () => {
@@ -118,7 +118,7 @@ describe("role source: the database is authoritative", () => {
     });
     const access = await resolveAccess(["ADMIN"]);
     expect(access).toMatchObject({ ok: false, reason: "forbidden" });
-    await expect(requirePageRole("ADMIN", "/admin/dashboard")).rejects.toThrow("REDIRECT:/customer/dashboard");
+    await expect(requirePageRole("ADMIN", "/admin/dashboard")).rejects.toThrow("REDIRECT:/products");
     expect((await requireApiAccess(["ADMIN"])).response?.status).toBe(403);
   });
 

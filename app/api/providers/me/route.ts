@@ -14,7 +14,7 @@ const fields = {
 } as const;
 
 export async function GET() {
-  const { user, response } = await requireApiAccess();
+  const { user, response } = await requireApiAccess(["SUPPLIER"]);
   if (response) return response;
   const profile = await prisma.providerProfile.findUnique({
     where: { userId: user.id },
@@ -24,7 +24,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { user, response } = await requireApiAccess();
+  const { user, response } = await requireApiAccess(["SUPPLIER"]);
   if (response) return response;
   if (user.status !== "ACTIVE") {
     return jsonError(403, "ACCOUNT_NOT_ACTIVE", "Your account must be active before creating a provider profile.");
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { user, response } = await requireApiAccess();
+  const { user, response } = await requireApiAccess(["SUPPLIER"]);
   if (response) return response;
   const parsed = providerProfileSchema.safeParse(await readJson(request));
   if (!parsed.success) return jsonError(400, "VALIDATION_ERROR", "Check the provider profile fields.");

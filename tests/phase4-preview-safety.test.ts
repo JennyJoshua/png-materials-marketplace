@@ -16,6 +16,7 @@ describe("Render pull-request preview safety", () => {
 
   it("does not expose authenticated workspaces or their APIs in previews", () => {
     for (const prefix of [
+      '"/provider"',
       '"/api/providers"',
       '"/api/admin"',
       '"/api/customer"',

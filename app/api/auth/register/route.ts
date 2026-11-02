@@ -11,24 +11,14 @@ import { ConfigError } from "@/lib/env";
 import { logServerError } from "@/lib/security/log";
 
 /**
- * Registration strategy (Option A - server-side profile creation):
- *   1. validate input (strict: a client "role" field is rejected, ADMIN is not selectable)
- *   2. Supabase Auth creates the identity (password handled ONLY by Supabase)
- *   3. trusted server code records the registration type in app_metadata (service-role key)
- *   4. the application profile is created idempotently, keyed by the Supabase user UUID
- * It never depends on signUp() returning a session, so it works with e-mail confirmation ON.
- * If step 4 fails, the user can still sign in later: syncAppUser() rebuilds the profile from the
- * trusted app_metadata hint (see lib/auth/session.ts).
+ * Public registration is provider-only. Both individual and business providers use the existing
+ * SUPPLIER database role for backward compatibility; providerKind/providerType are authoritative
+ * fields on ProviderProfile. CUSTOMER remains only for pre-existing accounts and recovery.
  */
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) return jsonError(403, "BAD_ORIGIN", "Request origin not allowed.");
-
   const limit = registerLimiter.check(getClientIp(request));
-  if (!limit.allowed) {
-    return jsonError(429, "RATE_LIMITED", "Too many sign-up attempts. Try again later.", {
-      "Retry-After": String(limit.retryAfterSeconds),
-    });
-  }
+  if (!limit.allowed) return jsonError(429, "RATE_LIMITED", "Too many sign-up attempts. Try again later.", { "Retry-After": String(limit.retryAfterSeconds) });
 
   const body = await readJson(request);
   const parsed = registerSchema.safeParse(body);
@@ -39,6 +29,7 @@ export async function POST(request: Request) {
     );
   }
   const input = parsed.data;
+  const providerKind = input.accountType === "INDIVIDUAL_PROVIDER" ? "INDIVIDUAL" : "BUSINESS";
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -47,39 +38,32 @@ export async function POST(request: Request) {
       password: input.password,
       options: {
         emailRedirectTo: getSiteUrl(request) ? `${getSiteUrl(request)}/auth/callback` : undefined,
-        // Descriptive profile data only. The role is NEVER taken from user_metadata.
         data: {
           full_name: input.fullName,
           phone: input.phone,
-          ...(input.accountType === "SUPPLIER"
-            ? { business_name: input.businessName, business_address: input.businessAddress, location: input.location }
-            : {}),
+          provider_display_name: input.displayName,
+          provider_kind: providerKind,
+          provider_type: input.providerType,
+          province: input.province,
         },
       },
     });
-
     if (error) {
-      if (error.code === "weak_password") {
-        return jsonError(400, "WEAK_PASSWORD", "Choose a stronger password.");
-      }
+      if (error.code === "weak_password") return jsonError(400, "WEAK_PASSWORD", "Choose a stronger password.");
       logServerError("register: supabase signUp", error);
       return jsonError(400, "REGISTRATION_FAILED", "We could not create the account. Check your details and try again.");
     }
     const authUser = data.user;
     if (!authUser) return jsonError(502, "AUTH_UNAVAILABLE", "Sign-up is unavailable right now. Try again shortly.");
+    // Avoid revealing whether an email is already registered.
+    if (Array.isArray(authUser.identities) && authUser.identities.length === 0) return jsonOk({ needsEmailConfirmation: true }, 201);
 
-    // Supabase returns an obfuscated user with no identities when the e-mail already exists.
-    // Answer exactly like a new sign-up so the form cannot be used to discover registered e-mails.
-    if (Array.isArray(authUser.identities) && authUser.identities.length === 0) {
-      return jsonOk({ needsEmailConfirmation: true }, 201);
-    }
-
-    // Trusted record of what was requested; used only to recover a failed profile creation.
     let hintSaved = true;
     try {
       const admin = createSupabaseAdminClient();
       const { error: metaError } = await admin.auth.admin.updateUserById(authUser.id, {
-        app_metadata: { registration_type: input.accountType },
+        // SUPPLIER is the existing database role for provider accounts; kind/type live in ProviderProfile.
+        app_metadata: { registration_type: "SUPPLIER" },
       });
       if (metaError) {
         hintSaved = false;
@@ -97,40 +81,40 @@ export async function POST(request: Request) {
         email: input.email,
         fullName: input.fullName,
         phone: input.phone,
-        role: input.accountType,
+        role: "SUPPLIER",
         emailConfirmed: Boolean(authUser.email_confirmed_at),
-        supplier:
-          input.accountType === "SUPPLIER"
-            ? { businessName: input.businessName, businessAddress: input.businessAddress, location: input.location }
-            : undefined,
+        provider: {
+          displayName: input.displayName,
+          providerKind,
+          providerType: input.providerType,
+          province: input.province,
+        },
       });
     } catch (profileError) {
       profileCreated = false;
-      logServerError("register: profile creation", profileError);
+      logServerError("register: provider profile creation", profileError);
       await writeAuditLog({
         userId: null,
         action: "PROFILE_CREATE_FAILED",
         resourceType: "user",
         resourceId: authUser.id,
-        metadata: { reason: profileError instanceof ProfileError ? profileError.code : "DB_ERROR", hintSaved },
+        metadata: { reason: profileError instanceof ProfileError ? profileError.code : "DB_ERROR", hintSaved, accountType: input.accountType },
         request,
       });
     }
-
-    if (!profileCreated && !hintSaved) {
-      // Nothing to recover from later: do not pretend the account is ready.
-      return jsonError(500, "SETUP_INCOMPLETE", "We could not finish setting up the account. Try again later.");
-    }
-
+    if (!profileCreated && !hintSaved) return jsonError(500, "SETUP_INCOMPLETE", "We could not finish setting up the account. Try again later.");
     if (profileCreated) {
-      await writeAuditLog({ userId: authUser.id, action: "USER_REGISTERED", resourceType: "user", resourceId: authUser.id, metadata: { accountType: input.accountType }, request });
+      await writeAuditLog({
+        userId: authUser.id,
+        action: "USER_REGISTERED",
+        resourceType: "user",
+        resourceId: authUser.id,
+        metadata: { accountType: input.accountType, providerKind, providerType: input.providerType },
+        request,
+      });
     }
-
     const signedIn = Boolean(data.session);
-    return jsonOk(
-      { needsEmailConfirmation: !signedIn, redirectTo: signedIn ? ROLE_HOME[input.accountType] : undefined },
-      201,
-    );
+    return jsonOk({ needsEmailConfirmation: !signedIn, redirectTo: signedIn ? ROLE_HOME.SUPPLIER : undefined }, 201);
   } catch (unexpected) {
     logServerError("register: unexpected failure", unexpected);
     if (unexpected instanceof ConfigError) return configErrorResponse(unexpected);

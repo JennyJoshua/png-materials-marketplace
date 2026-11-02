@@ -45,6 +45,25 @@ describe("recoverProfile (Auth user exists, profile missing)", () => {
     expect(db.state.supplierProfiles[0]).toMatchObject({ businessName: "Highlands Hardware" });
   });
 
+  it("rebuilds an individual or business provider profile from trusted provider metadata", async () => {
+    await recoverProfile(supabaseUser({
+      app_metadata: { registration_type: "SUPPLIER" },
+      user_metadata: {
+        ...validMeta,
+        provider_display_name: "Jenny Kila Services",
+        provider_kind: "INDIVIDUAL",
+        provider_type: "BOTH",
+        province: "Gulf",
+      },
+    }));
+    expect(db.state.users[0]?.role).toBe("SUPPLIER");
+    expect(db.state.providerProfiles[0]).toMatchObject({
+      displayName: "Jenny Kila Services", providerKind: "INDIVIDUAL", providerType: "BOTH",
+      province: "Gulf", status: "PENDING_REVIEW",
+    });
+    expect(db.state.supplierProfiles).toHaveLength(0);
+  });
+
   it("ignores a role placed in user_metadata (cannot self-promote to ADMIN)", async () => {
     await recoverProfile(
       supabaseUser({

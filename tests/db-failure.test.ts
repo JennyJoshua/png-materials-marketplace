@@ -5,7 +5,7 @@
  * log must never contain the connection string or any secret.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { customerForm, jsonRequest, supabaseUser } from "./helpers";
+import { individualProviderForm, jsonRequest, supabaseUser } from "./helpers";
 
 const h = vi.hoisted(() => ({
   auth: { signUp: vi.fn(), signInWithPassword: vi.fn(), signOut: vi.fn(), exchangeCodeForSession: vi.fn(), getUser: vi.fn() },
@@ -188,10 +188,10 @@ describe("protected API routes when the database fails", () => {
 describe("sign-up error mapping", () => {
   it("maps Supabase's weak_password to a clear 400 without echoing the password", async () => {
     h.auth.signUp.mockResolvedValue({ data: { user: null, session: null }, error: { code: "weak_password", status: 422, message: "Password should be at least 12 characters" } });
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     const text = await res.text();
     expect(res.status).toBe(400);
     expect(JSON.parse(text).error.code).toBe("WEAK_PASSWORD");
-    expect(text).not.toContain(customerForm.password);
+    expect(text).not.toContain(individualProviderForm.password);
   });
 });

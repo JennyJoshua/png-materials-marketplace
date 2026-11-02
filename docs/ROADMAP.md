@@ -2,7 +2,7 @@
 
 PNG Marketplace (repository: png-materials-marketplace)
 
-Last updated: 2026-11-02 (current phase status reconciled)
+Last updated: 2026-11-03 (provider-only account implementation on review branch)
 
 This roadmap covers the general-purpose marketplace for goods and services in Papua New Guinea. Building materials remain the first product category. The current phase sequence below supersedes earlier planning labels and status notes retained later in this file.
 
@@ -79,7 +79,7 @@ Phase 6  business development
 
 Status: Implemented in the repository; **PARTIALLY COMPLETE** per docs/REVIEW.md. Phase 1 is not fully complete.
 
-Implemented: Supabase Auth registration, login and logout for customers and suppliers; email-confirmation handling; three role dashboards; server-side role checks; five tables (users, customer_profiles, supplier_profiles, product_categories, audit_logs) with Row Level Security enabled and no policies; a category seed script; an audit-log foundation; in-memory rate limiting; security headers; automated tests. The implementation is preserved as it is.
+Implemented foundation: Supabase Auth login/logout and provider-only public registration (individual or business); email-confirmation handling; provider workspace and administrator dashboard; server-side role checks; provider profiles; legacy customer/supplier records and Phase 1 tables retained. The buyer dashboard is retired; public browsing does not require sign-in. Automated tests cover registration validation, profile creation/recovery and protected provider access.
 
 Verified (live Supabase database, reported by the project owner on 2026-10-21; details in docs/REVIEW.md):
 
@@ -191,3 +191,6 @@ Payment methods, subscription pricing, commission rates, the public brand name, 
 ## Phase 2 status update (2026-10-31)
 
 Provider foundation is on review branch `feature/phase-2-provider-foundation`, based on current main. It is not merged or deployed. Owner must review ZIP and migration before any application. Legacy supplier data is retained untouched; no speculative backfill. Product listings/search/comparison and service listings/search/bookings/quotes remain later phases.
+
+
+## Provider-only account implementation (2026-11-03)\n\nImplementation branch: `feature/provider-only-registration-public-marketplace`, based on the approved account-access decision branch. It updates public registration, provider profile creation/recovery, protected provider pages/APIs, public navigation and legacy customer dashboard handling. The database role enum and existing customer data are preserved; no SQL migration is required by this change. The branch must pass CI and owner review before merge. No production migration or deployment is authorised by this work.\n

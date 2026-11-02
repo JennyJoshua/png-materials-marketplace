@@ -60,7 +60,7 @@ describe("with NEXT_PUBLIC_SITE_URL set (behind a proxy)", () => {
   });
 
   it.each([
-    ["CUSTOMER", "/customer/dashboard"],
+    ["CUSTOMER", "/products"],
     ["SUPPLIER", "/supplier/dashboard"],
     ["ADMIN", "/admin/dashboard"],
   ] as const)("sends a confirmed %s to their dashboard on the public origin", async (role, path) => {
@@ -96,12 +96,12 @@ describe("with NEXT_PUBLIC_SITE_URL set (behind a proxy)", () => {
 
   it("still honours a safe ?next= path, on the public origin", async () => {
     const { callback } = await load();
-    expect((await callback(internalRequest("?code=abc&next=/customer/dashboard"))).headers.get("location")).toBe(`${PUBLIC}/customer/dashboard`);
+    expect((await callback(internalRequest("?code=abc&next=/customer/dashboard"))).headers.get("location")).toBe(`${PUBLIC}/products`);
   });
 
   it("never lets ?next= send a user to another role's area", async () => {
     const { callback } = await load();
-    expect((await callback(internalRequest("?code=abc&next=/admin/dashboard"))).headers.get("location")).toBe(`${PUBLIC}/customer/dashboard`);
+    expect((await callback(internalRequest("?code=abc&next=/admin/dashboard"))).headers.get("location")).toBe(`${PUBLIC}/products`);
   });
 
   it.each(["https://evil.example/steal", "//evil.example", "/\\evil.example", "javascript:alert(1)", "http://evil.example"])(
@@ -111,7 +111,7 @@ describe("with NEXT_PUBLIC_SITE_URL set (behind a proxy)", () => {
       const res = await callback(internalRequest(`?code=abc&next=${encodeURIComponent(next)}`));
       const target = new URL(res.headers.get("location") as string);
       expect(target.origin).toBe(PUBLIC);
-      expect(target.pathname).toBe("/customer/dashboard");
+      expect(target.pathname).toBe("/products");
     },
   );
 

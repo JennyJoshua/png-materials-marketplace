@@ -6,38 +6,32 @@ export default function HomePage() {
     <AppShell>
       <section className="home-hero">
         <p className="eyebrow">Papua New Guinea marketplace</p>
-        <h1>Find building materials. Compare listed prices. Contact suppliers directly.</h1>
+        <h1>Discover goods and services from providers across Papua New Guinea.</h1>
         <p className="hero-copy">
-          Discover products published by hardware stores and suppliers across Papua New Guinea.
-          Compare prices, check availability and contact suppliers directly.
+          Browse publicly without creating an account. Compare provider listings, check availability
+          and contact providers directly. Building materials remain an important marketplace category.
         </p>
         <div className="hero-actions">
-          <Link href="/products" className="btn">
-            Browse products
-          </Link>
-          <Link href="/register" className="btn secondary">
-            Join as a provider
-          </Link>
+          <Link href="/products" className="btn">Browse goods</Link>
+          <Link href="/register" className="btn secondary">Register as a provider</Link>
         </div>
-        <p className="hero-note">
-          Free public browsing · Prices in PGK · Confirm stock and terms with suppliers
-        </p>
+        <p className="hero-note">Free public browsing · No buyer account required · Confirm details directly with providers</p>
       </section>
-
       <section className="home-columns">
         <article className="panel">
-          <h2>For buyers</h2>
-          <p>Search products, compare listed prices and see supplier locations.</p>
-          <Link href="/products">Explore marketplace →</Link>
+          <h2>For the public</h2>
+          <p>Search goods and compare provider listings without registering or signing in.</p>
+          <Link href="/products">Explore goods →</Link>
         </article>
         <article className="panel">
-          <h2>For suppliers</h2>
-          <p>Create a provider profile, publish products and keep prices and stock current.</p>
-          <Link href="/provider/profile">Set up provider profile →</Link>
+          <h2>For individual providers</h2>
+          <p>Register to offer your products, services or both under one provider profile.</p>
+          <Link href="/register">Create an individual provider account →</Link>
         </article>
         <article className="panel">
-          <h2>Before you travel</h2>
-          <p>Confirm price, availability, delivery and payment arrangements directly with providers.</p>
+          <h2>For business providers</h2>
+          <p>Publish your business offers and manage your provider profile from one account.</p>
+          <Link href="/register">Create a business provider account →</Link>
         </article>
       </section>
     </AppShell>

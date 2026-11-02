@@ -6,7 +6,7 @@ import { productListingInputSchema } from "@/lib/validation/products";
 import { writeAuditLogOrThrow } from "@/lib/security/audit";
 
 export async function GET() {
-  const { user, response } = await requireApiAccess();
+  const { user, response } = await requireApiAccess(["SUPPLIER"]);
   if (response) return response;
   const provider = await getOwnedActiveProvider(user);
   if (!provider) return jsonError(403, "ACTIVE_PROVIDER_REQUIRED", "An active provider profile is required.");
@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const originError = sameOriginError(request);
   if (originError) return originError;
-  const { user, response } = await requireApiAccess();
+  const { user, response } = await requireApiAccess(["SUPPLIER"]);
   if (response) return response;
   const provider = await getOwnedActiveProvider(user);
   if (!provider) return jsonError(403, "ACTIVE_PROVIDER_REQUIRED", "An active provider profile is required.");
