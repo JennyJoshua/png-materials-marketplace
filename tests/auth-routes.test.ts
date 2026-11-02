@@ -210,6 +210,7 @@ describe("POST /api/auth/login", () => {
       (await (await login(jsonRequest("/api/auth/login", { body: { ...goodLogin, next } }))).json()).data.redirectTo;
     expect(await go("/customer/dashboard")).toBe("/products");
     expect(await go("/products")).toBe("/products");
+    expect(await go("/products")).toBe("/products");
     expect(await go("//evil.example")).toBe("/products");
     expect(await go("https://evil.example")).toBe("/products");
     expect(await go("/admin/dashboard")).toBe("/products");
