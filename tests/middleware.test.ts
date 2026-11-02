@@ -16,7 +16,7 @@ const at = (path: string) => new NextRequest(`https://app.test${path}`);
 beforeEach(() => vi.clearAllMocks());
 
 describe("middleware (first line of defence)", () => {
-  it.each(["/customer/dashboard", "/supplier/dashboard", "/admin/dashboard"])(
+  it.each(["/supplier/dashboard", "/admin/dashboard"])(
     "redirects an unauthenticated visitor from %s to /login with a next parameter",
     async (path) => {
       h.updateSession.mockResolvedValue({ response: NextResponse.next(), user: null });
@@ -26,7 +26,7 @@ describe("middleware (first line of defence)", () => {
     },
   );
 
-  it("lets a verified session through (role is enforced server-side, not here)", async () => {
+  it("redirects the retired customer dashboard to public browsing without a sign-in", async () => {\n    const res = await middleware(at("/customer/dashboard"));\n    expect(res.status).toBe(307);\n    expect(res.headers.get("location")).toBe("https://app.test/products");\n    expect(h.updateSession).not.toHaveBeenCalled();\n  });\n\n  it("lets a verified session through (role is enforced server-side, not here)", async () => {
     h.updateSession.mockResolvedValue({ response: NextResponse.next(), user: supabaseUser() });
     const res = await middleware(at("/admin/dashboard"));
     expect(res.status).toBe(200);
