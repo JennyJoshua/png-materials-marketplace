@@ -97,7 +97,8 @@ describe("routing helpers", () => {
   });
 
   it("never sends a user to another role's area after login", () => {
-    expect(postLoginPath("CUSTOMER", "/admin/dashboard")).toBe("/products");\n    expect(postLoginPath("CUSTOMER", "/customer/dashboard")).toBe("/products");
+    expect(postLoginPath("CUSTOMER", "/admin/dashboard")).toBe("/products");
+    expect(postLoginPath("CUSTOMER", "/customer/dashboard")).toBe("/products");
     expect(postLoginPath("ADMIN", "/admin/dashboard")).toBe("/admin/dashboard");
     expect(postLoginPath("SUPPLIER", "https://evil.example")).toBe("/supplier/dashboard");
   });
