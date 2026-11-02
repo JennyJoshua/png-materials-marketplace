@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { customerForm, jsonRequest, supabaseUser } from "./helpers";
+import { individualProviderForm, jsonRequest, supabaseUser } from "./helpers";
 
 const h = vi.hoisted(() => ({
   createServer: vi.fn(),
@@ -27,7 +27,7 @@ import { ConfigError, getServiceRoleKey, getSupabasePublicConfig } from "@/lib/e
 import { describeError, logServerError, redact } from "@/lib/security/log";
 import { loginIpLimiter, loginLimiter, registerLimiter } from "@/lib/security/rate-limit";
 
-const SECRET_PASSWORD = customerForm.password;
+const SECRET_PASSWORD = individualProviderForm.password;
 
 describe("environment configuration errors", () => {
   afterEach(() => vi.unstubAllEnvs());
@@ -125,7 +125,7 @@ describe("registration and login report setup problems clearly", () => {
   it("register answers 503 SERVER_NOT_CONFIGURED naming the variable in development", async () => {
     vi.stubEnv("NODE_ENV", "development");
     h.createServer.mockRejectedValue(configProblem());
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     const body = await res.json();
     expect(res.status).toBe(503);
     expect(body.error.code).toBe("SERVER_NOT_CONFIGURED");
@@ -136,7 +136,7 @@ describe("registration and login report setup problems clearly", () => {
   it("in production the same problem shows only a generic message", async () => {
     vi.stubEnv("NODE_ENV", "production");
     h.createServer.mockRejectedValue(configProblem());
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     const body = await res.json();
     expect(res.status).toBe(503);
     expect(JSON.stringify(body)).not.toMatch(/NEXT_PUBLIC|Supabase is not configured|\.env/);
@@ -152,7 +152,7 @@ describe("registration and login report setup problems clearly", () => {
 
   it("an unexpected non-config failure is still a plain 500 with the cause logged", async () => {
     h.createServer.mockRejectedValue(new TypeError("cookies() was called outside a request scope"));
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     expect(res.status).toBe(500);
     expect((await res.json()).error.code).toBe("SERVER_ERROR");
     expect(String(consoleError.mock.calls[0]![0])).toContain("cookies() was called outside a request scope");
@@ -164,7 +164,7 @@ describe("registration and login report setup problems clearly", () => {
     h.createAdmin.mockReturnValue({ auth: { admin: { updateUserById: vi.fn().mockResolvedValue({ error: null }) } } });
     h.ensureProfile.mockRejectedValue(Object.assign(new Error("The table `public.users` does not exist in the current database."), { name: "PrismaClientKnownRequestError", code: "P2021" }));
 
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     expect(res.status).toBe(201); // recoverable: the registration hint was saved
     const logged = consoleError.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
     expect(logged).toContain("register: profile creation");
@@ -180,7 +180,7 @@ describe("registration and login report setup problems clearly", () => {
     });
     h.ensureProfile.mockResolvedValue({ id: newUser.id });
 
-    const res = await register(jsonRequest("/api/auth/register", { body: customerForm }));
+    const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     expect(res.status).toBe(201);
     const logged = consoleError.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
     expect(logged).toContain("could not save registration hint");
