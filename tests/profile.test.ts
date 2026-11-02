@@ -98,6 +98,7 @@ describe("profile creation and role assignment", () => {
       displayName: "Jane Kila Services", providerKind: "INDIVIDUAL", providerType: "BOTH",
       province: "Gulf", status: "PENDING_REVIEW",
     });
+    expect(db.state.providerProfiles[0]).not.toHaveProperty("phone"); // private account phone is opt-in for public display
     expect(db.state.customerProfiles).toHaveLength(0);
     expect(db.state.supplierProfiles).toHaveLength(0);
   });
