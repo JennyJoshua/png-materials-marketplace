@@ -197,3 +197,16 @@ A provider-foundation implementation is on `feature/phase-2-provider-foundation`
 ## Phase 4 development update (2026-11-02)
 
 Phase 4 implementation is underway on `feature/phase-4-marketplace-experience`, based on the verified Phase 3 merge commit `2965523ee61e7e642ea78de0febc52c26bebce45`. This branch adds a public product catalogue, public product detail pages, provider listing management UI, homepage/navigation updates and Phase 4 interface tests. It reuses the existing Phase 3 APIs and visibility/ownership checks. No database migration, production setting, production data or deployment was changed as part of this work. Release remains subject to owner approval.
+
+
+## Phase 4 review follow-up (2026-11-02)
+
+A second review identified and corrected three user-facing issues before release:
+
+- The catalogue's Clear filters action now submits explicit empty filter values rather than relying on a delayed state update.
+- Provider listing submission is guarded against repeated taps while a save is in progress.
+- Supplier verification labels now distinguish `CONTACT_CONFIRMED` from `DOCUMENTS_CHECKED`; unverified profiles are not described as verified.
+
+The README and roadmap were updated additively so earlier project and Phase 1 history remains available, while current phase status is explicit. No Prisma schema, migration, production data, Supabase setting or Render setting was changed.
+
+GitHub Actions on the reviewed branch confirmed the disposable-PostgreSQL migration/RLS/grant validation passed. CI tests and type-check also passed; the production build was still running at the time of this note. Final CI status must be checked before the pull request is considered ready for merge.
