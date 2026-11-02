@@ -111,7 +111,7 @@ describe("with NEXT_PUBLIC_SITE_URL set (behind a proxy)", () => {
       const res = await callback(internalRequest(`?code=abc&next=${encodeURIComponent(next)}`));
       const target = new URL(res.headers.get("location") as string);
       expect(target.origin).toBe(PUBLIC);
-      expect(target.pathname).toBe("/customer/dashboard");
+      expect(target.pathname).toBe("/products");
     },
   );
 
