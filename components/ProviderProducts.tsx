@@ -36,6 +36,21 @@ const emptyForm = {
 
 type ListingForm = typeof emptyForm;
 
+async function requestJson(url: string, init?: RequestInit) {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...init?.headers,
+    },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) {
+    throw new Error(result.error?.message || "Request failed.");
+  }
+  return result.data;
+}
+
 export function ProviderProducts() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -46,27 +61,12 @@ export function ProviderProducts() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function api(url: string, init?: RequestInit) {
-    const response = await fetch(url, {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...init?.headers,
-      },
-    });
-    const result = await response.json();
-    if (!response.ok || !result.success) {
-      throw new Error(result.error?.message || "Request failed.");
-    }
-    return result.data;
-  }
-
   const load = useCallback(async () => {
     setBusy(true);
     try {
       const [categoryData, listingData] = await Promise.all([
-        api("/api/categories"),
-        api("/api/providers/products"),
+        requestJson("/api/categories"),
+        requestJson("/api/providers/products"),
       ]);
       setCategories(categoryData.categories);
       setListings(listingData.listings);
@@ -113,7 +113,7 @@ export function ProviderProducts() {
     setError("");
     setMessage("");
     try {
-      await api(
+      await requestJson(
         editingId ? "/api/providers/products/" + editingId : "/api/providers/products",
         {
           method: editingId ? "PATCH" : "POST",
@@ -137,7 +137,7 @@ export function ProviderProducts() {
     setError("");
     setMessage("");
     try {
-      await api("/api/providers/products/" + id + "/" + action, { method: "POST" });
+      await requestJson("/api/providers/products/" + id + "/" + action, { method: "POST" });
       setMessage(
         action === "unpublish"
           ? "Listing unpublished."
