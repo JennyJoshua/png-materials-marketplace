@@ -96,7 +96,7 @@ async function run(db: ProfileDb, seed: ProfileSeed) {
               providerKind: seed.provider.providerKind,
               providerType: seed.provider.providerType,
               province: seed.provider.province,
-              phone: seed.phone,
+              // Registration phone is private account contact data. Public provider contact is opt-in.
               status: "PENDING_REVIEW",
             },
           });
