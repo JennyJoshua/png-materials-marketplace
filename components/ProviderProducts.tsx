@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Category = { id: string; name: string };
 type Listing = {
@@ -61,7 +61,7 @@ export function ProviderProducts() {
     return result.data;
   }
 
-  async function load() {
+  const load = useCallback(async () => {
     setBusy(true);
     try {
       const [categoryData, listingData] = await Promise.all([
@@ -70,22 +70,22 @@ export function ProviderProducts() {
       ]);
       setCategories(categoryData.categories);
       setListings(listingData.listings);
-      if (!form.categoryId && categoryData.categories[0]) {
-        setForm((current) => ({ ...current, categoryId: categoryData.categories[0].id }));
-      }
+      setForm((current) => ({
+        ...current,
+        categoryId: current.categoryId || categoryData.categories[0]?.id || "",
+      }));
       setError("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to load listings.");
     } finally {
       setBusy(false);
     }
-  }
+  }, []);
 
   // Load this provider's listings once when the workspace opens.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   function updateField(field: keyof ListingForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
