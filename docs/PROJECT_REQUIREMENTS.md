@@ -269,7 +269,7 @@ Proposed (to be decided in Phase 2): separate levels, for example contact detail
 
 8.3 Privacy and fraud
 
-- Private details (phone, email, address) are shown only when the design says they should be, and never to people who have no relationship with the provider or buyer (Proposed rules to be set in Phase 2 and 4).
+- Private details (phone, email, address) are shown only when explicitly designated for public display. The phone collected for account registration is private account-contact data and is not copied to the public provider phone field. A provider must separately opt in by adding a public contact phone to their provider profile.
 - Rate limiting, audit logging and moderation tools apply to listings, enquiries and reviews.
 - Listings can be reported and suspended by administrators.
 
