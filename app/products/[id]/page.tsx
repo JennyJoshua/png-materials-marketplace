@@ -42,7 +42,6 @@ export default async function ProductDetailsPage({
           description: true,
           phone: true,
           publicEmail: true,
-          address: true,
           province: true,
           district: true,
           townOrArea: true,
@@ -145,12 +144,6 @@ export default async function ProductDetailsPage({
                     {product.providerProfile.publicEmail}
                   </a>
                 </dd>
-              </>
-            ) : null}
-            {product.providerProfile.address ? (
-              <>
-                <dt>Address</dt>
-                <dd>{product.providerProfile.address}</dd>
               </>
             ) : null}
             <dt>Pickup</dt>
