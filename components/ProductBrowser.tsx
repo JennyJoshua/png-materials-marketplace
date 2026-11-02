@@ -191,7 +191,7 @@ export function ProductBrowser() {
       {categoryError ? <p className="alert info" role="status">{categoryError}</p> : null}
 
       <div className="results-heading">
-        <h2>Available products</h2>
+        <h2>Marketplace listings</h2>
         <span className="muted" aria-live="polite">
           {busy ? "Loading…" : total + " listings"}
         </span>
