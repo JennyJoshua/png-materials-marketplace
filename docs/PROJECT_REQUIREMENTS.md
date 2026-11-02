@@ -118,14 +118,14 @@ These concepts are kept separate:
 | Concept | Meaning | Status |
 |---|---|---|
 | User account | Identity, login and account status. Supabase Auth holds the credentials; the application `users` table holds the application profile. | Implemented (Phase 1) |
-| Buyer capability | The ability to search, request quotations, book services and purchase goods. | Planned. In Phase 1 the CUSTOMER role is the closest thing. |
-| Provider profile | Information about a shop, business or individual service provider. | Phase 1 has `supplier_profiles` for suppliers only. A general provider profile is Planned (Phase 2 design). |
-| Provider type | Product seller, service provider, or combined goods-and-services provider. | Planned |
+| Public visitor capability | Browse, search and compare public goods/services listings without registration or sign-in. | Approved; public catalogue routes are unauthenticated. |
+| Provider profile | Information about an individual or business offering products, services or both. | Implemented in Phase 2 provider foundation. |
+| Provider type | Products, services, or both. | Implemented in Phase 2 provider foundation. |
 | Administrator | Authorised platform management. | Implemented as the ADMIN role (Phase 1) |
 
 4.3 What exists today (Phase 1)
 
-`users.role` is CUSTOMER, SUPPLIER or ADMIN. The database profile is the authoritative role and is never taken from the browser or from Supabase `user_metadata`. Public registration offers only CUSTOMER and SUPPLIER. ADMIN is granted by a controlled manual step. Every protected page and API route re-checks identity and role on the server.
+`users.role` remains CUSTOMER, SUPPLIER or ADMIN for backward compatibility. The database profile is authoritative and is never taken from the browser or Supabase `user_metadata`. Public registration now offers only INDIVIDUAL_PROVIDER or BUSINESS_PROVIDER; both map to the existing SUPPLIER database role. `provider_profiles.provider_kind` records INDIVIDUAL or BUSINESS, and `provider_type` records PRODUCTS, SERVICES or BOTH. CUSTOMER is retained only for legacy records; no new customer accounts can be registered. ADMIN is granted by a controlled manual step. Provider pages and APIs re-check identity, database role and ownership on the server.
 
 4.4 What must stay unchanged in Phase 1
 
@@ -964,7 +964,7 @@ End of document.
 
 ## Phase 2 provider foundation implementation (2026-10-31)
 
-Implemented on the Phase 2 review branch: one provider profile per account; individual/business kind; products/services/both capability; PNG primary location; optional contact/business details; owner create/read/update; admin status and verification controls; separate service categories; additive migration with RLS and client-role revokes. Listings, discovery, bookings, quotes, orders, payments and reviews remain out of scope. `users.role` and public registration roles remain unchanged.
+Implemented on the Phase 2 review branch: one provider profile per account; individual/business kind; products/services/both capability; PNG primary location; optional contact/business details; owner create/read/update; admin status and verification controls; separate service categories; additive migration with RLS and client-role revokes. Listings, discovery, bookings, quotes, orders, payments and reviews remain out of scope for the Phase 2 foundation. The database role enum remains unchanged for compatibility; the provider-only registration implementation maps both provider kinds to SUPPLIER and creates the provider profile.
 
 ---
 
