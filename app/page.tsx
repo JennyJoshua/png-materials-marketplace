@@ -6,7 +6,7 @@ export default function HomePage() {
     <AppShell>
       <section className="home-hero">
         <p className="eyebrow">Papua New Guinea marketplace</p>
-        <h1>Find building materials. Compare supplier prices. Buy with confidence.</h1>
+        <h1>Find building materials. Compare listed prices. Contact suppliers directly.</h1>
         <p className="hero-copy">
           Discover products published by hardware stores and suppliers across Papua New Guinea.
           Compare prices, check availability and contact suppliers directly.
