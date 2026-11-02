@@ -1,47 +1,45 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { AccountPanel, ComingLater, PhaseNotice } from "@/components/DashboardParts";
+import { AccountPanel } from "@/components/DashboardParts";
 import { requirePageRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 
-export const metadata: Metadata = { title: "Supplier dashboard" };
+export const metadata: Metadata = { title: "Provider workspace" };
 export const dynamic = "force-dynamic";
 
-export default async function SupplierDashboard() {
+export default async function ProviderDashboard() {
   const user = await requirePageRole("SUPPLIER", "/supplier/dashboard");
-  // Scoped by the verified user id, never by an id taken from the URL or request.
-  const profile = await prisma.supplierProfile.findUnique({
+  const profile = await prisma.providerProfile.findUnique({
     where: { userId: user.id },
-    select: { businessName: true, location: true, verificationStatus: true },
+    select: { displayName: true, providerKind: true, providerType: true, province: true, status: true, verificationLevel: true },
   });
-
   return (
     <AppShell user={user}>
-      <h1>Supplier dashboard</h1>
+      <h1>Provider workspace</h1>
       <AccountPanel user={user} />
       {profile ? (
-        <section className="panel" aria-labelledby="business-heading">
-          <h2 id="business-heading">Your business</h2>
+        <section className="panel" aria-labelledby="provider-heading">
+          <h2 id="provider-heading">Your provider profile</h2>
           <dl className="facts">
-            <dt>Business</dt>
-            <dd>{profile.businessName}</dd>
-            <dt>Location</dt>
-            <dd>{profile.location}</dd>
-            <dt>Verification</dt>
-            <dd>
-              <span className="badge gold">{profile.verificationStatus}</span>
-            </dd>
+            <dt>Public name</dt><dd>{profile.displayName}</dd>
+            <dt>Provider account</dt><dd>{profile.providerKind === "INDIVIDUAL" ? "Individual provider" : "Business provider"}</dd>
+            <dt>Offers</dt><dd>{profile.providerType === "BOTH" ? "Goods and services" : profile.providerType === "PRODUCTS" ? "Goods" : "Services"}</dd>
+            <dt>Province</dt><dd>{profile.province}</dd>
+            <dt>Approval</dt><dd><span className="badge">{profile.status}</span></dd>
+            <dt>Verification</dt><dd>{profile.verificationLevel}</dd>
           </dl>
-          <p className="muted" style={{ marginTop: "0.75rem", marginBottom: 0 }}>
-            An administrator reviews new suppliers. Verification does not guarantee prices, stock or quality.
-          </p>
+          <p><Link href="/provider/profile">Edit provider profile</Link></p>
         </section>
-      ) : null}
-      <PhaseNotice>
-        Your supplier account is set up. Adding products and prices, receiving quotation requests and managing orders will be
-        added in later phases.
-      </PhaseNotice>
-      <ComingLater items={["My products and prices", "Quotation requests", "My quotations", "My orders"]} />
+      ) : (
+        <section className="panel"><h2>Complete your provider profile</h2><Link className="btn" href="/provider/profile">Set up profile</Link></section>
+      )}
+      <section className="panel">
+        <h2>Manage goods</h2>
+        <p>Approved providers with goods capability can publish and manage product listings.</p>
+        <Link href="/provider/products">Manage my product listings</Link>
+      </section>
+      <p className="muted">The public does not need accounts to search for or purchase from providers. Your provider account is for managing your offers.</p>
     </AppShell>
   );
 }
