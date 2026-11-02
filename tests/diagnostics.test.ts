@@ -167,7 +167,7 @@ describe("registration and login report setup problems clearly", () => {
     const res = await register(jsonRequest("/api/auth/register", { body: individualProviderForm }));
     expect(res.status).toBe(201); // recoverable: the registration hint was saved
     const logged = consoleError.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
-    expect(logged).toContain("register: profile creation");
+    expect(logged).toContain("register: provider profile creation");
     expect(logged).toContain("P2021");
     expect(logged).not.toContain(SECRET_PASSWORD);
   });
