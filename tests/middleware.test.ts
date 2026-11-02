@@ -41,7 +41,7 @@ describe("middleware (first line of defence)", () => {
     expect(res.cookies.get("sb-refresh")?.value).toBe("new-value");
   });
 
-  it("only runs on the three protected areas", () => {
-    expect(config.matcher).toEqual(["/customer/:path*", "/supplier/:path*", "/admin/:path*"]);
+  it("runs broadly so preview mode can block server actions and API writes", () => {
+    expect(config.matcher).toEqual(["/((?!_next/static|_next/image|favicon.ico).*)"]);
   });
 });
