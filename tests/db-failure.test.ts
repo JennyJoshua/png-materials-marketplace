@@ -86,7 +86,7 @@ describe("login when the database fails AFTER Supabase sign-in succeeded", () =>
 
   it("does the same when only the last-login update fails", async () => {
     h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
-    h.syncAppUser.mockResolvedValue({ id: "11111111-1111-4111-8111-111111111111", role: "CUSTOMER", status: "ACTIVE" });
+    h.syncAppUser.mockResolvedValue({ id: "11111111-1111-4111-8111-111111111111", role: "SUPPLIER", status: "ACTIVE" });
     h.userUpdate.mockRejectedValue(badUrlError());
 
     const res = await login(jsonRequest("/api/auth/login", { body: goodLogin }));
