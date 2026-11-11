@@ -23,7 +23,7 @@ For each item, record Pass / Fail / Not tested and a short observation. Do not e
 | ID | Test | Result | Evidence / notes |
 |---|---|---|---|
 | A01 | Open homepage as a signed-out visitor | **Pass** | Owner-reported on 2026-11-11: homepage loads very beautifully when opened signed out. Device/browser details not recorded. |
-| A02 | Browse catalogue without an account | Not tested | |
+| A02 | Browse catalogue without an account | **Pass with defect noted** | Owner-reported on 2026-11-11: catalogue works while signed out. Marketplace listings section also displays a JSON parse error; tracked as DEF-001. |
 | A03 | Search, filter, sort and paginate catalogue | Not tested | |
 | A04 | Open product detail and confirm public information is appropriate | Not tested | |
 | A05 | Register an Individual Provider and complete email confirmation | Not tested | |
