@@ -6,9 +6,9 @@
 
 ## Current evidence position
 
-A01 passed based on owner-reported live testing. A02 catalogue browsing works for a signed-out visitor, but DEF-001 is confirmed by the owner's report and supported by Render application logs. The root connection problem is isolated to the Render-to-Supabase Prisma connection; the exact misconfiguration in Render's secret connection string has not yet been identified.
+A01 passed based on owner-reported live testing. DEF-001 was caused by the Supabase project being paused. The owner restored/activated the Supabase project and refreshed the Render-hosted marketplace. The owner reports that the JSON parsing error disappeared and the Marketplace listings section now displays its normal empty-state message: "No matching products yet — Try another search or clear some filters."
 
-The Supabase project png-materials-marketplace (upsnqffflxpsvqexascf) reports ACTIVE_HEALTHY, and a read-only SELECT now() through the Supabase connection succeeded on 2026-11-11. Render logs at 2026-11-11 08:41 UTC show Prisma initialization failures for both productCategory.findMany() and productListing.findMany(), with: FATAL: (ENOTFOUND) tenant/user postgres.upsnqffflxpsvqexascf not found. This strongly indicates a mismatch or routing problem in the database connection configured for the Render service, not missing catalogue records or tables. The Render service metadata does not expose secret environment-variable values, and no credentials or settings have been changed.
+This confirms the reported catalogue loading symptom is resolved after the Supabase project was reactivated. No application-code change, Render environment-variable change, database schema change or credential change was required. Earlier Render logs at 2026-11-11 08:41 UTC showed Prisma connection failures while the Supabase project was paused. A subsequent read-only query against Supabase succeeded after the project was active.
 
 ## Defect intake template
 
@@ -16,7 +16,7 @@ Add one row per distinct reproducible issue. Keep secrets, passwords, personal c
 
 | ID | Acceptance test | Severity | Status | Reproduction steps | Expected result | Actual result | Evidence / safe reference | Owner / next action | Retest |
 |---|---|---|---|---|---|---|---|---|---|
-| DEF-001 | A02 — guest catalogue | Medium (provisional) | Open — Render/Supabase connection diagnosis confirmed; exact Render connection-string configuration pending | Open the public catalogue while signed out | Listings and categories load; API failures return structured JSON rather than an empty/non-JSON response | User reports: Failed to execute 'json' on 'Response': Unexpected end of JSON input. Render logs show Prisma connection failures for categories and listings: FATAL: (ENOTFOUND) tenant/user postgres.upsnqffflxpsvqexascf not found | Owner-reported on 2026-11-11; Render application logs at 2026-11-11 08:41 UTC; Supabase project status ACTIVE_HEALTHY; read-only database query succeeded at 08:47 UTC | Verify Render's configured database connection host, port, username and connection mode against the active Supabase project's connection details. Do not expose or paste passwords/tokens. Correct only after confirming the exact mismatch and obtaining owner approval for changing production service secrets/settings. | Pending |
+| DEF-001 | A02 — guest catalogue | Medium (provisional) | **Closed — owner retest passed** | Open the public catalogue while signed out; initial report occurred while the linked Supabase project was paused | Listings/categories load, or a clear empty-state message appears when there are no matching public listings; no JSON parsing error | Initially showed: Failed to execute 'json' on 'Response': Unexpected end of JSON input. Owner reactivated the paused Supabase project and refreshed the Render page; error disappeared and the normal empty state appeared: "No matching products yet — Try another search or clear some filters." | Owner-confirmed retest on 2026-11-11; earlier Render logs at 08:41 UTC recorded Prisma connection failures during the paused-project period | No code change required. Keep the Supabase project active and monitor availability. Reopen only if the error recurs. | **Pass — owner-confirmed after Supabase reactivation, 2026-11-11** |
 
 ## Severity definitions
 
@@ -48,4 +48,4 @@ Add one row per distinct reproducible issue. Keep secrets, passwords, personal c
 
 ## Current register outcome
 
-**One open defect:** DEF-001 affects initial guest catalogue data loading because Render's Prisma connection to Supabase fails. Continue with the remaining acceptance tests only where the affected journey is not blocked; retest A02 after the connection configuration is corrected through an approved change.
+**No currently open defects are recorded from this acceptance pass.** DEF-001 is closed following the owner's successful retest after reactivating the paused Supabase project. Continue with the remaining acceptance tests.
