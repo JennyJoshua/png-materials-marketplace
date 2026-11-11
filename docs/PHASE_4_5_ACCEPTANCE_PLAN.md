@@ -2,7 +2,7 @@
 
 **Repository:** JennyJoshua/png-materials-marketplace  
 **Prepared:** 2026-11-11  
-**Status:** In progress; A01 passed and A02 passed with DEF-001 open.
+**Status:** In progress; A01 and A02 passed.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ Confirm that the deployed Phase 4 marketplace works for real visitors and provid
 - Render service: https://png-materials-marketplace.onrender.com.
 - Automated PR #15 evidence: 259 tests passed; TypeScript check and production build passed; disposable PostgreSQL migration/RLS/grant/constraint validation passed.
 - Owner reported the deployed homepage loads well and the public catalogue can be opened.
-- DEF-001: the initial catalogue request path triggers an empty-response JSON parsing error. Render logs show Prisma initialization failures for both category and listing queries at 2026-11-11 08:41 UTC, with FATAL: (ENOTFOUND) tenant/user postgres.upsnqffflxpsvqexascf not found. The corresponding Supabase project reports ACTIVE_HEALTHY, and a read-only SQL query succeeded at 08:47 UTC. The likely issue is Render's configured Prisma database connection host/username/connection mode. Exact Render secret configuration has not been inspected or changed.
+- DEF-001 was caused by the Supabase project being paused. The owner reactivated the project and refreshed the Render marketplace page. The JSON parsing error disappeared and the Marketplace listings section displayed its normal empty-state message: "No matching products yet — Try another search or clear some filters." The owner-confirmed retest passed on 2026-11-11. No application-code or Render configuration change was needed.
 
 ## Acceptance record
 
@@ -23,7 +23,7 @@ For each item, record Pass / Fail / Not tested and a short observation. Do not e
 | ID | Test | Result | Evidence / notes |
 |---|---|---|---|
 | A01 | Open homepage as a signed-out visitor | **Pass** | Owner-reported on 2026-11-11: homepage loads very beautifully when opened signed out. Device/browser details not recorded. |
-| A02 | Browse catalogue without an account | **Pass with defect noted** | Owner-reported on 2026-11-11: catalogue page opens while signed out. Marketplace listings section shows a JSON parse error. Render logs confirm Prisma database connection failures for initial category and listing queries; tracked as DEF-001. |
+| A02 | Browse catalogue without an account | **Pass** | Owner reports catalogue page opens signed out. Initial JSON error was caused by the Supabase project being paused. After reactivating Supabase and refreshing Render, the error disappeared and the normal "No matching products yet" empty state appeared. DEF-001 closed after owner retest on 2026-11-11. |
 | A03 | Search, filter, sort and paginate catalogue | Not tested | |
 | A04 | Open product detail and confirm public information is appropriate | Not tested | |
 | A05 | Register an Individual Provider and complete email confirmation | Not tested | |
