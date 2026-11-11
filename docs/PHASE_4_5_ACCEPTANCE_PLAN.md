@@ -2,7 +2,7 @@
 
 **Repository:** `JennyJoshua/png-materials-marketplace`  
 **Prepared:** 2026-11-11  
-**Status:** Planned; no acceptance results recorded yet.
+**Status:** In progress; A01 passed based on owner-reported live testing.
 
 ## Purpose
 
@@ -22,7 +22,7 @@ For each item, record Pass / Fail / Not tested and a short observation. Do not e
 
 | ID | Test | Result | Evidence / notes |
 |---|---|---|---|
-| A01 | Open homepage as a signed-out visitor | Not tested | |
+| A01 | Open homepage as a signed-out visitor | **Pass** | Owner-reported on 2026-11-11: homepage loads very beautifully when opened signed out. Device/browser details not recorded. |
 | A02 | Browse catalogue without an account | Not tested | |
 | A03 | Search, filter, sort and paginate catalogue | Not tested | |
 | A04 | Open product detail and confirm public information is appropriate | Not tested | |
