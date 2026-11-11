@@ -17,10 +17,21 @@ const NOTICES: Record<string, string> = {
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
   const { next, error } = await searchParams;
   const user = await getAppUser().catch(() => null);
-  if (user && user.status !== "SUSPENDED") redirect(ROLE_HOME[user.role]);
+  if (user && user.status !== "SUSPENDED" && (user.role === "SUPPLIER" || user.role === "ADMIN")) {
+    redirect(ROLE_HOME[user.role]);
+  }
+  const legacyCustomerSession = user?.role === "CUSTOMER";
   return (
     <AppShell>
       <h1>Provider sign in</h1>
+      {legacyCustomerSession ? (
+        <section className="alert info" role="status">
+          <p>This session belongs to a legacy public/customer account, not a provider account. Sign out of that session, then sign in with an Individual Provider or Business Provider account.</p>
+          <form action="/api/auth/logout" method="post">
+            <button className="btn secondary" type="submit">Sign out of this account</button>
+          </form>
+        </section>
+      ) : null}
       <LoginForm next={isSafeRelativePath(next) ? next : undefined} notice={error ? NOTICES[error] : undefined} />
       <p style={{ marginTop: "1rem" }}>Need a provider account? <Link href="/register">Register as an individual or business provider</Link>.</p>
       <p className="hint">The public marketplace can be browsed without signing in. Existing legacy customer accounts do not have a buyer dashboard.</p>
