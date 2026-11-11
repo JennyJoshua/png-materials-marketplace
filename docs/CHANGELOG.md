@@ -1,3 +1,18 @@
+## [Unreleased] - 2026-11-11 - Phase 4 status reconciliation and stabilisation plan
+
+### Corrected
+- Recorded Phase 4 as implemented and deployed following merged PR #15 and provider-only access PR #17.
+- Reconciled README, roadmap and review status with the current `main` branch and inspected live Render deployment.
+- Clarified that deployment and owner-reported functionality do not constitute completed acceptance testing or public launch approval.
+
+### Added
+- Phase 4.5 acceptance and release-readiness plan, including public guest journeys, individual/business provider journeys, listing ownership, privacy, mobile and low-bandwidth checks.
+- Phase 5 scope boundary for guest-first enquiries and quotations; buyer accounts, payments and ordering remain out of scope.
+
+### Not changed
+- No application code, database schema/migrations, production data, Supabase settings, Render settings, secrets or production deployment.
+- No existing pull request was closed or merged.
+
 # Changelog
 
 All significant project changes are recorded here.
