@@ -16,7 +16,7 @@ Add one row per distinct reproducible issue. Keep secrets, passwords, personal c
 
 | ID | Acceptance test | Severity | Status | Reproduction steps | Expected result | Actual result | Evidence / safe reference | Owner / next action | Retest |
 |---|---|---|---|---|---|---|---|---|---|
-| — | No confirmed defects recorded yet | — | Awaiting testing | — | — | — | — | Record findings from Phase 4.5 checklist | — |
+| DEF-001 | A02 — guest catalogue | Medium (provisional) | Open — root cause under investigation | Open the public catalogue while signed out; exact trigger not yet isolated | Listings load without a JSON parsing error; API failures should return a valid structured JSON error | User reports: `Failed to execute 'json' on 'Response': Unexpected end of JSON input` appears in the Marketplace listings section, although catalogue browsing works | Owner-reported on 2026-11-11; device/browser and exact trigger not yet recorded | Inspect `/api/products` and `/api/categories` response handling; identify empty/non-JSON response source before changing code | Pending |
 
 ## Severity definitions
 
