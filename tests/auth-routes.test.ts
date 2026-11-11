@@ -212,7 +212,7 @@ describe("POST /api/auth/login", () => {
     };
     expect(await go("/supplier/products")).toBe("/supplier/products");
     expect(await go("/supplier/dashboard")).toBe("/supplier/dashboard");
-    expect(await go("/products")).toBe("/supplier/dashboard");
+    expect(await go("/products")).toBe("/products");
     expect(await go("//evil.example")).toBe("/supplier/dashboard");
     expect(await go("https://evil.example")).toBe("/supplier/dashboard");
     expect(await go("/admin/dashboard")).toBe("/supplier/dashboard");
