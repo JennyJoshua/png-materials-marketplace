@@ -82,13 +82,13 @@ describe("a signed-in user is not affected by an audit failure", () => {
     h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
     vi.mocked(syncAppUser).mockResolvedValue({
       id: "11111111-1111-4111-8111-111111111111", email: "jane@example.com", fullName: "Jane", phone: null,
-      role: "CUSTOMER", status: "ACTIVE", createdAt: new Date(),
+      role: "SUPPLIER", status: "ACTIVE", createdAt: new Date(),
     });
     h.auditCreate.mockRejectedValue(invalidUrl());
 
     const res = await login(jsonRequest("/api/auth/login", { body: { email: "jane@example.com", password: "correct horse 42" } }));
     expect(res.status).toBe(200);
-    expect((await res.json()).data.redirectTo).toBe("/products");
+    expect((await res.json()).data.redirectTo).toBe("/supplier/dashboard");
     expect(h.auth.signOut).not.toHaveBeenCalled();
   });
 });
