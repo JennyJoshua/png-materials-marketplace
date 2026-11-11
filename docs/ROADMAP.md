@@ -2,7 +2,7 @@
 
 PNG Marketplace (repository: png-materials-marketplace)
 
-Last updated: 2026-11-03 (provider-only account implementation on review branch)
+Last updated: 2026-11-11 (Phase 4 and provider-only access merged; Phase 4.5 readiness plan)
 
 This roadmap covers the general-purpose marketplace for goods and services in Papua New Guinea. Building materials remain the first product category. The current phase sequence below supersedes earlier planning labels and status notes retained later in this file.
 
@@ -16,21 +16,22 @@ Status key: Implemented, Planned, Proposed (a recommendation awaiting approval).
 - Tests are written with each phase. A phase is finished only when its features work, its tests pass, and its status in docs/REVIEW.md is updated honestly.
 - Payments, delivery marketplace and AI features stay deferred unless a later decision changes that.
 
-## Current agreed phase sequence (2 November 2026)
+## Current agreed phase sequence (11 November 2026)
 
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Foundation | Implemented |
 | 2 | Provider foundation | Implemented |
 | 3 | Product marketplace backend | Implemented and deployed; production migration verified by owner |
-| 4 | Marketplace experience and launch polish | In progress on `feature/phase-4-marketplace-experience` |
+| 4 | Marketplace experience | Implemented and deployed (PR #15; PR #17 completes provider-only public access) |
+| 4.5 | Stabilisation and launch readiness | Next; acceptance testing and sign-off outstanding |
 | 5 | Customer enquiries and supplier quotations | Planned |
 | 6 | Orders and transaction management | Planned |
 | 7 | Trust, verification and reputation | Planned |
 | 8 | Payments and business tools | Deferred pending PNG suitability assessment and explicit approval |
 | 9 | Expansion and intelligent services | Future |
 
-The current Phase 4 scope is public product browsing, search/filtering, product details, provider listing management and launch presentation. Enquiries, quotations, orders and payments are not part of Phase 4.
+Phase 4 implementation is merged and deployed. It includes public product browsing, search/filtering, product details, provider listing management, provider-only registration and guest public access. Phase 4.5 is a release-readiness stage, not a new product feature phase. It covers manual acceptance testing, defects, mobile/low-bandwidth checks, access-control checks and an explicit launch-readiness decision. Enquiries, quotations, orders and payments are not part of Phase 4 or 4.5.
 
 ## Historical status summary (superseded)
 
@@ -194,3 +195,46 @@ Provider foundation is on review branch `feature/phase-2-provider-foundation`, b
 
 
 ## Provider-only account implementation (2026-11-03)\n\nImplementation branch: `feature/provider-only-registration-public-marketplace`, based on the approved account-access decision branch. It updates public registration, provider profile creation/recovery, protected provider pages/APIs, public navigation and legacy customer dashboard handling. The database role enum and existing customer data are preserved; no SQL migration is required by this change. The branch must pass CI and owner review before merge. No production migration or deployment is authorised by this work.\n
+
+## Phase 4.5 — Stabilisation and launch readiness
+
+**Status: Next. Not yet started or signed off.** The application is deployed on Render, and the owner has reported that it functions. That is useful evidence, but it is not a substitute for a recorded acceptance test. The live service being marked `live` means deployment succeeded; it does not mean the product is publicly launched or fully verified.
+
+### Baseline deployment evidence
+
+- Phase 4 marketplace experience merged in PR #15: `bd9bc1948f5a14281880e115d2d19c6cae397baa`.
+- Provider-only registration and public guest access merged in PR #17: `11969133bd79d757ccae8a36497fc5251630ab04`.
+- Render service: `https://png-materials-marketplace.onrender.com`, tracking `main`; latest inspected live deployment corresponds to PR #17 merge commit.
+- Automated validation recorded in PR #15: 259 tests passed, TypeScript type-check passed, production build passed, and disposable-PostgreSQL migration/RLS/grant/constraint validation passed.
+- Still outstanding: manual browser/device acceptance, live registration and provider workflow confirmation, and a documented release decision.
+
+### Acceptance checklist
+
+1. Public visitor opens the homepage and can browse without registering or signing in.
+2. Public visitor can search/filter the catalogue and open product details; empty results and pagination behave correctly.
+3. Individual-provider registration works, including email confirmation and return to the public site.
+4. Business-provider registration works, including email confirmation and return to the public site.
+5. Provider can sign in, view their workspace, create/edit a listing, and publish/unpublish/archive only their own listings.
+6. A provider cannot modify another provider's listings; public visitors cannot access provider or administrator functions.
+7. Administrator access remains restricted; no public administrator registration is available.
+8. Public pages do not expose provider street addresses, private account email, secrets or internal-only data.
+9. Core journeys remain usable on an Android-sized screen and on a slow/intermittent connection; loading, empty and error states are understandable.
+10. No critical or high-severity defect remains open. Record any lower-severity known issues and their accepted disposition.
+
+Record each result as **Pass**, **Fail**, or **Not tested**, with a short note. Do not record an item as passed based only on automated tests if it requires live interaction.
+
+### Defect and release gates
+
+- Critical security/data-loss issue: stop release and remediate before any launch decision.
+- High-severity failure in registration, provider ownership, listing publication or public browsing: fix and retest before launch.
+- Production database changes, Render configuration changes, secret changes, paid services and production deployment remain explicit owner-approval gates.
+- Do not add buyer/customer registration. Browsing remains guest-first; registration is for Individual Provider or Business Provider only.
+- Do not introduce payments, ordering, quotations or bookings as part of stabilisation.
+
+### Exit criteria
+
+Phase 4.5 is complete only when the checklist has recorded results, critical/high defects are closed and retested, remaining issues are documented, and the owner explicitly accepts the launch-readiness report. Public launch is a separate owner decision.
+
+## Phase 5 — Enquiries and quotations (recommended scope)
+
+**Status: Planned; specification required before implementation.** Support guest-first product enquiries and service requests without creating buyer accounts. Include contact/request capture, provider inbox, quotation preparation and response/history. A request may cover multiple products/materials or a service job. Both individual professionals and businesses must be supported. Defer orders, online payments, booking complexity, commissions and subscriptions. Design the data model, abuse controls, privacy/retention, provider ownership, notifications and acceptance criteria before any migration or code work.
