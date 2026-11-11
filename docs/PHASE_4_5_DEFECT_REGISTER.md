@@ -6,7 +6,7 @@
 
 ## Current evidence position
 
-No live manual acceptance results have yet been supplied or recorded against the Phase 4.5 checklist. Therefore, **no product defects are currently confirmed by this register**. This is not a claim that the product has no defects.
+One live manual acceptance result has been supplied: A01 passed. No product defects are currently confirmed by this register. This is not a claim that the product has no defects.
 
 The automated checks on PR #18 passed. The live Render service was inspected and reported the latest deployment as live on the PR #17 merge commit. These facts do not substitute for manual browser/device acceptance testing.
 
@@ -48,4 +48,4 @@ Add one row per distinct reproducible issue. Keep secrets, passwords, personal c
 
 ## Current register outcome
 
-**No confirmed defects entered.** Await completed acceptance results. Each test should be marked Pass, Fail or Not tested in the acceptance plan; every Fail should be assessed here before it is treated as a confirmed defect.
+**No confirmed defects entered.** A01 passed; continue recording findings from the remaining acceptance tests. Each test should be marked Pass, Fail or Not tested in the acceptance plan; every Fail should be assessed here before it is treated as a confirmed defect.
