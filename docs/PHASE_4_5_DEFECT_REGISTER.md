@@ -6,9 +6,9 @@
 
 ## Current evidence position
 
-One live manual acceptance result has been supplied: A01 passed. No product defects are currently confirmed by this register. This is not a claim that the product has no defects.
+A01 passed based on owner-reported live testing. A02 catalogue browsing works for a signed-out visitor, but DEF-001 is confirmed by the owner's report and supported by Render application logs. The root connection problem is isolated to the Render-to-Supabase Prisma connection; the exact misconfiguration in Render's secret connection string has not yet been identified.
 
-The automated checks on PR #18 passed. The live Render service was inspected and reported the latest deployment as live on the PR #17 merge commit. These facts do not substitute for manual browser/device acceptance testing.
+The Supabase project png-materials-marketplace (upsnqffflxpsvqexascf) reports ACTIVE_HEALTHY, and a read-only SELECT now() through the Supabase connection succeeded on 2026-11-11. Render logs at 2026-11-11 08:41 UTC show Prisma initialization failures for both productCategory.findMany() and productListing.findMany(), with: FATAL: (ENOTFOUND) tenant/user postgres.upsnqffflxpsvqexascf not found. This strongly indicates a mismatch or routing problem in the database connection configured for the Render service, not missing catalogue records or tables. The Render service metadata does not expose secret environment-variable values, and no credentials or settings have been changed.
 
 ## Defect intake template
 
@@ -16,7 +16,7 @@ Add one row per distinct reproducible issue. Keep secrets, passwords, personal c
 
 | ID | Acceptance test | Severity | Status | Reproduction steps | Expected result | Actual result | Evidence / safe reference | Owner / next action | Retest |
 |---|---|---|---|---|---|---|---|---|---|
-| DEF-001 | A02 — guest catalogue | Medium (provisional) | Open — root cause under investigation | Open the public catalogue while signed out; exact trigger not yet isolated | Listings load without a JSON parsing error; API failures should return a valid structured JSON error | User reports: `Failed to execute 'json' on 'Response': Unexpected end of JSON input` appears in the Marketplace listings section, although catalogue browsing works | Owner-reported on 2026-11-11; device/browser and exact trigger not yet recorded | Inspect `/api/products` and `/api/categories` response handling; identify empty/non-JSON response source before changing code | Pending |
+| DEF-001 | A02 — guest catalogue | Medium (provisional) | Open — Render/Supabase connection diagnosis confirmed; exact Render connection-string configuration pending | Open the public catalogue while signed out | Listings and categories load; API failures return structured JSON rather than an empty/non-JSON response | User reports: Failed to execute 'json' on 'Response': Unexpected end of JSON input. Render logs show Prisma connection failures for categories and listings: FATAL: (ENOTFOUND) tenant/user postgres.upsnqffflxpsvqexascf not found | Owner-reported on 2026-11-11; Render application logs at 2026-11-11 08:41 UTC; Supabase project status ACTIVE_HEALTHY; read-only database query succeeded at 08:47 UTC | Verify Render's configured database connection host, port, username and connection mode against the active Supabase project's connection details. Do not expose or paste passwords/tokens. Correct only after confirming the exact mismatch and obtaining owner approval for changing production service secrets/settings. | Pending |
 
 ## Severity definitions
 
@@ -48,4 +48,4 @@ Add one row per distinct reproducible issue. Keep secrets, passwords, personal c
 
 ## Current register outcome
 
-**No confirmed defects entered.** A01 passed; continue recording findings from the remaining acceptance tests. Each test should be marked Pass, Fail or Not tested in the acceptance plan; every Fail should be assessed here before it is treated as a confirmed defect.
+**One open defect:** DEF-001 affects initial guest catalogue data loading because Render's Prisma connection to Supabase fails. Continue with the remaining acceptance tests only where the affected journey is not blocked; retest A02 after the connection configuration is corrected through an approved change.
