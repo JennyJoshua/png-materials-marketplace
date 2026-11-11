@@ -48,6 +48,13 @@ export async function POST(request: Request) {
       await supabase.auth.signOut();
       return jsonError(409, "PROFILE_INCOMPLETE", "Your account setup is incomplete. Contact support.");
     }
+    // Buyer/customer accounts are no longer a supported sign-in type. Never redirect a
+    // legacy CUSTOMER session to /products from the provider sign-in flow.
+    if (appUser.role !== "SUPPLIER" && appUser.role !== "ADMIN") {
+      await supabase.auth.signOut();
+      signedIn = false;
+      return jsonError(403, "PROVIDER_ACCOUNT_REQUIRED", "This is not a provider account. Sign in with an Individual Provider or Business Provider account.");
+    }
     if (appUser.status === "SUSPENDED") {
       await supabase.auth.signOut();
       return jsonError(403, "ACCOUNT_SUSPENDED", "This account is suspended.");

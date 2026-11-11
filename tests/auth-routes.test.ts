@@ -182,15 +182,15 @@ describe("POST /api/auth/login", () => {
     expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "USER_LOGIN_FAILED" }));
   });
 
-  it("keeps legacy customer sign-in but returns the public marketplace", async () => {
+  it("rejects legacy customer sign-in and ends the session", async () => {
     h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
     h.syncAppUser.mockResolvedValue(appUser("CUSTOMER"));
     const res = await login(jsonRequest("/api/auth/login", { body: goodLogin }));
-    expect(res.status).toBe(200);
-    expect((await res.json()).data.redirectTo).toBe("/products");
-    expect(h.auth.signInWithPassword).toHaveBeenCalledWith({ email: "jane@example.com", password: "correct horse 42" });
-    expect(h.userUpdate).toHaveBeenCalled();
-    expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "USER_LOGIN" }));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.code).toBe("PROVIDER_ACCOUNT_REQUIRED");
+    expect(h.auth.signOut).toHaveBeenCalledTimes(1);
+    expect(h.userUpdate).not.toHaveBeenCalled();
+    expect(h.audit).not.toHaveBeenCalledWith(expect.objectContaining({ action: "USER_LOGIN" }));
   });
 
   it.each([
@@ -205,15 +205,17 @@ describe("POST /api/auth/login", () => {
 
   it("honours a safe same-area next path but never an external or other-role path", async () => {
     h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
-    h.syncAppUser.mockResolvedValue(appUser("CUSTOMER"));
-    const go = async (next: string) =>
-      (await (await login(jsonRequest("/api/auth/login", { body: { ...goodLogin, next } }))).json()).data.redirectTo;
-    expect(await go("/customer/dashboard")).toBe("/products");
+    h.syncAppUser.mockResolvedValue(appUser("SUPPLIER"));
+    const go = async (next: string) => {
+      const res = await login(jsonRequest("/api/auth/login", { body: { ...goodLogin, next } }));
+      return (await res.json()).data.redirectTo;
+    };
+    expect(await go("/supplier/products")).toBe("/supplier/products");
+    expect(await go("/supplier/dashboard")).toBe("/supplier/dashboard");
     expect(await go("/products")).toBe("/products");
-    expect(await go("/products")).toBe("/products");
-    expect(await go("//evil.example")).toBe("/products");
-    expect(await go("https://evil.example")).toBe("/products");
-    expect(await go("/admin/dashboard")).toBe("/products");
+    expect(await go("//evil.example")).toBe("/supplier/dashboard");
+    expect(await go("https://evil.example")).toBe("/supplier/dashboard");
+    expect(await go("/admin/dashboard")).toBe("/supplier/dashboard");
   });
 
   it("blocks suspended accounts and ends the session", async () => {
