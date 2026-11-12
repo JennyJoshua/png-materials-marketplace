@@ -19,7 +19,8 @@ export async function POST(request: Request) {
       return jsonError(400, "PASSWORD_UPDATE_FAILED", "We could not update that password. Choose a stronger password or request a new recovery link.");
     }
 
-    await supabase.auth.signOut();
+    const { error: signOutError } = await supabase.auth.signOut();
+    if (signOutError) logServerError("password update: session sign-out failed", signOutError);
     return jsonOk({ updated: true, redirectTo: "/admin/login" });
   } catch (error) {
     logServerError("password update: unexpected failure", error);
