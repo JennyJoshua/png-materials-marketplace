@@ -9,7 +9,7 @@ export const passwordRule = z.string().min(10, "Use at least 10 characters.").ma
 export const passwordResetSchema = z.strictObject({ email });
 export const passwordUpdateSchema = z.strictObject({
   password: passwordRule,
-  confirmPassword: z.string(),
+  confirmPassword: z.string().max(72),
 }).refine(value => value.password === value.confirmPassword, {
   message: "Passwords do not match.",
   path: ["confirmPassword"],
