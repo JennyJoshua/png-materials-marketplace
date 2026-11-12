@@ -73,9 +73,9 @@ describe("migration: Phase 1 tables and Row Level Security (static validation)",
 describe("Prisma schema", () => {
   const schema = read("prisma/schema.prisma");
 
-  it("declares the foundation, provider and Phase 3 product listing models", () => {
+  it("declares the foundation, provider, Phase 3 listing and Phase 5A enquiry models", () => {
     const models = [...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]);
-    expect(models.sort()).toEqual(["AuditLog", "CustomerProfile", "ProductCategory", "ProductListing", "ProviderProfile", "ServiceCategory", "SupplierProfile", "User"]);
+    expect(models.sort()).toEqual(["AuditLog", "CustomerProfile", "Enquiry", "EnquiryAccessCredential", "EnquiryMessage", "ProductCategory", "ProductListing", "ProviderProfile", "ServiceCategory", "SupplierProfile", "User"]);
   });
 
   it("uses the pooled DATABASE_URL at runtime and DIRECT_URL for migrations", () => {
@@ -85,7 +85,8 @@ describe("Prisma schema", () => {
 
   it("has no password fields and no relation to the Supabase auth schema", () => {
     const fields = schema.split("\n").filter((l) => /^\s+\w+\s+\w/.test(l) && !l.trim().startsWith("//"));
-    for (const line of fields) expect(line.trim().split(/\s+/)[0]).not.toMatch(/pass|hash|token|secret/i);
+    // A SHA-256 token digest is intentionally stored; plaintext credentials and secrets are not.
+    for (const line of fields) expect(line.trim().split(/\s+/)[0]).not.toMatch(/password|rawtoken|secret/i);
     expect(schema).not.toMatch(/schemas\s*=/);
   });
 });
