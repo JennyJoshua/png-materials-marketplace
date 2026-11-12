@@ -12,7 +12,8 @@ import { logServerError } from "@/lib/security/log";
 
 const INVALID = "Invalid email or password.";
 
-export async function POST(request: Request) {
+/** Shared credential verification with strict separation between provider and administrator entry points. */
+export async function handleLogin(request: Request, requiredRole: "SUPPLIER" | "ADMIN") {
   if (!isSameOrigin(request)) return jsonError(403, "BAD_ORIGIN", "Request origin not allowed.");
 
   const ip = getClientIp(request);
@@ -38,22 +39,21 @@ export async function POST(request: Request) {
         return jsonError(403, "EMAIL_NOT_CONFIRMED", "Confirm your email address first. Check your inbox for the link.");
       }
       await writeAuditLog({ userId: null, action: "USER_LOGIN_FAILED", request });
-      // One generic message for unknown e-mail and wrong password.
       return jsonError(401, "INVALID_CREDENTIALS", INVALID);
     }
 
-    signedIn = true; // from here on a failure must also end the Supabase session
+    signedIn = true;
     const appUser = await syncAppUser(data.user);
     if (!appUser) {
       await supabase.auth.signOut();
       return jsonError(409, "PROFILE_INCOMPLETE", "Your account setup is incomplete. Contact support.");
     }
-    // Buyer/customer accounts are no longer a supported sign-in type. Never redirect a
-    // legacy CUSTOMER session to /products from the provider sign-in flow.
-    if (appUser.role !== "SUPPLIER" && appUser.role !== "ADMIN") {
+    if (appUser.role !== requiredRole) {
       await supabase.auth.signOut();
       signedIn = false;
-      return jsonError(403, "PROVIDER_ACCOUNT_REQUIRED", "This is not a provider account. Sign in with an Individual Provider or Business Provider account.");
+      return requiredRole === "ADMIN"
+        ? jsonError(403, "ADMIN_ACCOUNT_REQUIRED", "This is not an administrator account. Use the provider sign-in page if you have a provider account.")
+        : jsonError(403, "PROVIDER_ACCOUNT_REQUIRED", "This is not a provider account. Sign in with an Individual Provider or Business Provider account.");
     }
     if (appUser.status === "SUSPENDED") {
       await supabase.auth.signOut();
@@ -62,21 +62,18 @@ export async function POST(request: Request) {
 
     await prisma.user.update({ where: { id: appUser.id }, data: { lastLoginAt: new Date() } });
     await writeAuditLog({ userId: appUser.id, action: "USER_LOGIN", resourceType: "user", resourceId: appUser.id, request });
-
     return jsonOk({ redirectTo: postLoginPath(appUser.role, next) });
   } catch (unexpected) {
     logServerError("login: unexpected failure", unexpected);
-    // Supabase accepted the password but the application could not finish (for example the database
-    // is unreachable). End the session so the user is not left half signed in.
     if (signedIn && supabase) {
-      try {
-        await supabase.auth.signOut();
-      } catch {
-        // best effort: the failure above is what gets reported
-      }
+      try { await supabase.auth.signOut(); } catch { /* best effort */ }
     }
     if (unexpected instanceof ConfigError) return configErrorResponse(unexpected);
     if (isDatabaseError(unexpected)) return databaseUnavailableResponse();
     return jsonError(500, "SERVER_ERROR", "Something went wrong. Try again shortly.");
   }
+}
+
+export async function POST(request: Request) {
+  return handleLogin(request, "SUPPLIER");
 }
