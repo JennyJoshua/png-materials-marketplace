@@ -43,7 +43,7 @@ Leaked-password protection (Supabase checking new passwords against known breach
    - **Redirect URLs**: add `http://localhost:3000/auth/callback` and `https://<your-service>.onrender.com/auth/callback` (and your custom domain's `/auth/callback` later).
 5. Optional: configure custom SMTP before launch. Supabase's built-in email sender is heavily rate-limited and meant for testing.
 
-Password reset is also handled by Supabase Auth. The app has no reset page yet (planned for a later phase).
+Administrator password setup and recovery are implemented in the application. From `/admin/login`, open **Forgot your password or setting it up for the first time?**, enter the existing Auth account email, and request a recovery link. Supabase sends a one-time link back through `/auth/callback`; the user chooses a password on `/auth/update-password`. The application enforces at least 10 characters, including a letter and a number. The reset endpoint returns the same response whether or not the email exists and is rate-limited. Supabase Auth remains the only password store. Ensure the production `/auth/callback` URL is included in Supabase Authentication → URL Configuration → Redirect URLs. The recovery link is sent only when the user requests it; the app does not send one automatically.
 
 ## 5. Database migration: current state and Prisma's migration history
 
