@@ -183,3 +183,15 @@ To remove admin rights later, change the verified user's database role to an app
 ## 8. Storage (future)
 
 Phase 1 creates **no bucket**. When uploads are added (supplier logos, product images, verification documents), create the buckets then: verification documents in a private bucket read through short-lived signed URLs; logos and product images may use a public-read bucket with writes only from server code. See ARCHITECTURE.md A10.
+
+
+## 8. Password setup and recovery
+
+The application provides a password-recovery flow for an existing Supabase Auth identity. On the administrator sign-in page, use **Forgot your password or setting it up for the first time?** and enter the email address of the existing administrator identity. Supabase sends a one-time recovery link; the invitation email itself does not contain a password.
+
+The recovery link returns to `/auth/callback?next=/auth/update-password`. The callback exchanges the PKCE code for a session and routes directly to the password-update page without creating, repairing, or changing an application profile or role. The password-update endpoint requires that authenticated recovery session and updates only the Supabase Auth password. It does not grant ADMIN privileges.
+
+The redirect URL must be allowed in Supabase Authentication → URL Configuration. Ensure the production callback URL is included (or covered by an existing wildcard):
+`https://png-materials-marketplace.onrender.com/auth/callback`.
+
+After saving the password, sign in at `/admin/login`. If the account is still rejected as incomplete, verify the matching `public.users` row and administrator role using the controlled provisioning procedure in section 7. Password recovery never promotes an account.
