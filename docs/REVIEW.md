@@ -1,26 +1,30 @@
 # Project Review
 
 Version: 0.1.0
-Current phase: Phase 4 — Marketplace experience (in progress)
-Status last updated: 2026-11-02 (Phase 4 review; historical Phase 1 record retained below)
+Current phase: Phase 4 complete; Phase 4.5 — Stabilisation and launch readiness (next)
+Status last updated: 2026-11-11
 
-**Historical Phase 1 status: PARTIALLY COMPLETE (record retained below)**
+## Current verified project status
 
-This file preserves the Phase 1 review and its historical evidence. The current project status and Phase 4 review are recorded at the end of this file. The Phase 1-only notes below must not be interpreted as the current overall project phase.
+- **Phase 1 — Foundation:** implemented; historical verification record retained below.
+- **Phase 2 — Provider foundation:** implemented and merged.
+- **Phase 3 — Product marketplace backend:** implemented and deployed; owner-reported production migration verification is retained in the project history.
+- **Phase 4 — Marketplace experience:** merged in PR #15 (merge commit `bd9bc1948f5a14281880e115d2d19c6cae397baa`). PR #17 (merge commit `11969133bd79d757ccae8a36497fc5251630ab04`) completes provider-only registration and public guest access.
+- **Deployment:** Render service `https://png-materials-marketplace.onrender.com` was inspected and reported `live` on `main`, at the PR #17 merge commit. The owner has separately reported that the application functions.
+- **Automated validation:** PR #15 records 259 passing tests, successful TypeScript type-check and production build, plus disposable-PostgreSQL migration/RLS/grant/constraint validation.
+
+## Not yet demonstrated / outstanding
+
+- No complete, recorded live acceptance test of the individual-provider and business-provider journeys, public browsing/search, listing management and authorization boundaries.
+- No recorded mobile/low-bandwidth acceptance pass or final launch-readiness sign-off.
+- Automated tests and a live deployment do not prove all real-world browser/device flows. Deployment is not public launch approval.
+- Phase 5 enquiries and quotations remain unimplemented and require a separate approved specification.
+
+## Current recommendation
+
+Proceed with Phase 4.5 stabilisation using `docs/PHASE_4_5_ACCEPTANCE_PLAN.md`. Keep production changes and public launch approval-gated. Do not add buyer registration; public browsing remains available without an account, and public registration is for Individual Provider or Business Provider only.
 
 ---
-
-
-
-# Current project status (updated 2026-11-02)
-
-- **Phase 1 — Foundation:** implemented; the older Phase 1 verification record remains below for audit history.
-- **Phase 2 — Provider foundation:** implemented and merged.
-- **Phase 3 — Product marketplace backend:** merged and deployed; the owner applied and verified the production migration and confirmed the deployed app is functioning.
-- **Phase 4 — Marketplace experience:** under review in draft PR #15 on `feature/phase-4-marketplace-experience`. Scope includes public product catalogue/search/filtering, product details, provider listing management and launch presentation.
-- No Phase 4 database migration, production data change, Supabase setting, Render setting, merge to `main` or production deployment has been performed.
-
-The historical Phase 1 outstanding items and status statements below were accurate for that earlier review period. They do not override the later Phase 2/3 completion and production evidence summarized above.
 
 # Historical Phase 1 status record (updated 2026-10-25; retained for audit history)
 

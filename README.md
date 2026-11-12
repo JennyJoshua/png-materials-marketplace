@@ -6,11 +6,11 @@ A mobile-first web app (PWA-ready) that is planned to connect people and organis
 
 Building materials were the starting point and remain an important category. The project is now planned as a wider marketplace for goods **and** services. The scope was expanded on 2026-10-21; that change is documentation only.
 
-**Current version:** 0.1.0. Current delivery stage: Phase 4 — Marketplace experience.
+**Current version:** 0.1.0. Current delivery stage: Phase 4 complete; Phase 4.5 stabilisation and launch-readiness verification next.
 
 
 
-> **Current implementation status — 2 November 2026 (supersedes older phase-status statements below):** Phases 1 and 2 are implemented. The Phase 3 product-marketplace backend is deployed and its production migration was verified by the project owner. Phase 4 is being developed on `feature/phase-4-marketplace-experience`; the draft PR adds the public catalogue, product details, provider listing workspace and launch presentation. The deployed application was confirmed functioning by the owner. Current agreed roadmap: Phase 4 marketplace experience; Phase 5 enquiries and quotations; Phase 6 orders and transaction management; Phase 7 trust and reputation; Phase 8 payments/business tools (deferred pending PNG suitability and approval); Phase 9 expansion and intelligent services.
+> **Current implementation status — 11 November 2026 (supersedes older phase-status statements below):** Phases 1–3 are implemented. Phase 4 marketplace experience was merged in PR #15 (`bd9bc1948f5a14281880e115d2d19c6cae397baa`). Provider-only registration and public guest access were merged in PR #17 (`11969133bd79d757ccae8a36497fc5251630ab04`). The Render service is live on `main` at the PR #17 merge commit. The owner has reported that the deployed application functions. Phase 4 is complete as an implementation milestone; **Phase 4.5 stabilisation and launch-readiness acceptance testing remain outstanding**. Deployment is not the same as public launch. Current agreed roadmap: Phase 4.5 stabilisation; Phase 5 enquiries and quotations; Phase 6 orders and transaction management; Phase 7 trust and reputation; Phase 8 payments/business tools (deferred pending PNG suitability and approval); Phase 9 expansion and intelligent services.
 
 ## Who it serves
 
@@ -34,7 +34,8 @@ Phase 1 still uses the original roles (Customer, Supplier, Admin). How the accou
 |---|---|
 | **Implemented (Phases 1–3)** | Authentication and profiles; provider foundation; product listing backend, public APIs, provider management APIs and administrator moderation. Phase 3 is deployed and its production migration was verified by the owner. |
 | **Verified (live Supabase, reported by the project owner 2026-10-21)** | The Phase 1 migration SQL was applied manually; the category seed ran (exactly 15 ACTIVE product categories); Row Level Security was enabled and checked on all five Phase 1 tables, with no policies and `anon`/`authenticated` privileges revoked (default-deny). Supabase Auth: email and email confirmation enabled, anonymous sign-ins disabled |
-| **Phase 4 (in progress)** | Public catalogue, search/filtering, product detail pages, provider listing workspace and launch polish. See the current roadmap and draft PR. |
+| **Phase 4 (implemented and deployed)** | Public catalogue, search/filtering, product details, provider listing workspace, provider-only registration and public guest access. Merged through PRs #15 and #17; deployed on Render. |
+| **Phase 4.5 (next)** | Stabilisation, manual acceptance testing, defect triage and launch-readiness review. Not yet signed off. |
 | **Planned (Phases 5–9)** | Customer enquiries and supplier quotations; orders and transaction management; trust/reputation; payments and business tools (deferred pending PNG suitability); expansion and intelligent services. |
 | **Future** | Online payments (after evaluation for Papua New Guinea), delivery marketplace, AI material suggestions, price intelligence, multi-supplier checkout, provider subscriptions and featured listings (options to evaluate) |
 
@@ -69,7 +70,8 @@ No microservices. See `docs/ARCHITECTURE.md` for the design and `docs/DECISIONS.
 1. **Foundation** — implemented.
 2. **Provider foundation** — implemented.
 3. **Product marketplace backend** — implemented and deployed.
-4. **Marketplace experience** — in progress.
+4. **Marketplace experience** — implemented and deployed.
+4.5 **Stabilisation and launch readiness** — next; acceptance testing and defect closure outstanding.
 5. **Customer enquiries and supplier quotations** — planned.
 6. **Orders and transaction management** — planned.
 7. **Trust, verification and reputation** — planned.
