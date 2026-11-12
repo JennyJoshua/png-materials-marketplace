@@ -14,20 +14,23 @@ export async function middleware(request: NextRequest) {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return NextResponse.json({ success: false, error: { code: "PREVIEW_READ_ONLY", message: "This pull-request preview is read-only. Sign-in and changes are disabled." } }, { status: 403 });
     }
-    if (roleForPath(pathname) || privatePagePrefixes.some(prefix => isWithin(pathname, prefix)) || privateApiPrefixes.some(prefix => isWithin(pathname, prefix)) || authPagePrefixes.some(prefix => isWithin(pathname, prefix))) {
+    if (roleForPath(pathname) || privatePagePrefixes.some(prefix => isWithin(pathname, prefix)) || privateApiPrefixes.some(prefix => isWithin(pathname, prefix)) || authPagePrefixes.some(prefix => isWithin(pathname, prefix)) || pathname === "/admin/login") {
       return NextResponse.redirect(new URL("/products", request.url));
     }
     return NextResponse.next();
   }
 
+  // The dedicated administrator sign-in is public; all other /admin paths remain protected.
+  if (pathname === "/admin/login") return NextResponse.next();
+
   // The buyer dashboard is retired. Legacy customer data is retained, but all visitors use public browsing.
   if (isWithin(pathname, "/customer")) return NextResponse.redirect(new URL("/products", request.url));
 
-  // Only protected application areas need a verified Supabase session refresh. Public browsing and search do not.
   if (!roleForPath(pathname)) return NextResponse.next();
   const { response, user } = await updateSession(request);
   if (!user) {
-    const loginUrl = new URL("/login", request.url);
+    const loginPath = pathname === "/admin" || pathname.startsWith("/admin/") ? "/admin/login" : "/login";
+    const loginUrl = new URL(loginPath, request.url);
     loginUrl.searchParams.set("next", `${pathname}${search}`);
     return redirectWithCookies(loginUrl, response);
   }

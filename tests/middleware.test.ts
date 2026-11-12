@@ -11,11 +11,24 @@ const at = (path: string) => new NextRequest(`https://app.test${path}`);
 beforeEach(() => vi.clearAllMocks());
 
 describe("middleware (first line of defence)", () => {
-  it.each(["/supplier/dashboard", "/admin/dashboard"])("redirects an unauthenticated visitor from %s to login", async path => {
+  it("redirects an unauthenticated provider-area visitor to provider sign-in", async () => {
     h.updateSession.mockResolvedValue({ response: NextResponse.next(), user: null });
+    const path = "/supplier/dashboard";
     const res = await middleware(at(path));
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe(`https://app.test/login?next=${encodeURIComponent(path)}`);
+  });
+  it("redirects an unauthenticated administrator-area visitor to admin sign-in", async () => {
+    h.updateSession.mockResolvedValue({ response: NextResponse.next(), user: null });
+    const path = "/admin/dashboard";
+    const res = await middleware(at(path));
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe(`https://app.test/admin/login?next=${encodeURIComponent(path)}`);
+  });
+  it("allows the dedicated admin sign-in page without refreshing a session", async () => {
+    const res = await middleware(at("/admin/login"));
+    expect(res.status).toBe(200);
+    expect(h.updateSession).not.toHaveBeenCalled();
   });
   it("allows public marketplace pages without refreshing or requiring a session", async () => {
     const res = await middleware(at("/products"));

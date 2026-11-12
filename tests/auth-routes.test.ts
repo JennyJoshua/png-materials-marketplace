@@ -29,6 +29,7 @@ vi.mock("@/lib/security/audit", () => ({ writeAuditLog: h.audit }));
 
 import { POST as register } from "@/app/api/auth/register/route";
 import { POST as login } from "@/app/api/auth/login/route";
+import { POST as adminLogin } from "@/app/api/auth/admin-login/route";
 import { POST as logout } from "@/app/api/auth/logout/route";
 import { GET as callback } from "@/app/auth/callback/route";
 import { loginIpLimiter, loginLimiter, registerLimiter } from "@/lib/security/rate-limit";
@@ -193,14 +194,20 @@ describe("POST /api/auth/login", () => {
     expect(h.audit).not.toHaveBeenCalledWith(expect.objectContaining({ action: "USER_LOGIN" }));
   });
 
-  it.each([
-    ["SUPPLIER", "/supplier/dashboard"],
-    ["ADMIN", "/admin/dashboard"],
-  ])("sends %s users to %s", async (role, home) => {
+  it("sends provider accounts to the provider dashboard", async () => {
     h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
-    h.syncAppUser.mockResolvedValue(appUser(role));
+    h.syncAppUser.mockResolvedValue(appUser("SUPPLIER"));
     const res = await login(jsonRequest("/api/auth/login", { body: goodLogin }));
-    expect((await res.json()).data.redirectTo).toBe(home);
+    expect((await res.json()).data.redirectTo).toBe("/supplier/dashboard");
+  });
+
+  it("rejects administrator accounts at the provider sign-in endpoint and ends the session", async () => {
+    h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
+    h.syncAppUser.mockResolvedValue(appUser("ADMIN"));
+    const res = await login(jsonRequest("/api/auth/login", { body: goodLogin }));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.code).toBe("PROVIDER_ACCOUNT_REQUIRED");
+    expect(h.auth.signOut).toHaveBeenCalledTimes(1);
   });
 
   it("honours a safe same-area next path but never an external or other-role path", async () => {
@@ -252,6 +259,36 @@ describe("POST /api/auth/login", () => {
     expect((await login(jsonRequest("/api/auth/login", { body: goodLogin, origin: "https://evil.example" }))).status).toBe(403);
     expect((await login(jsonRequest("/api/auth/login", { body: { ...goodLogin, role: "ADMIN" } }))).status).toBe(400);
     expect(h.auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("POST /api/auth/admin-login", () => {
+  const goodLogin = { email: "Jane@Example.com", password: "correct horse 42" };
+
+  it("authenticates an active administrator and redirects to the admin dashboard", async () => {
+    h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
+    h.syncAppUser.mockResolvedValue(appUser("ADMIN"));
+    const res = await adminLogin(jsonRequest("/api/auth/admin-login", { body: goodLogin }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.redirectTo).toBe("/admin/dashboard");
+  });
+
+  it("rejects provider accounts and ends the Supabase session", async () => {
+    h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
+    h.syncAppUser.mockResolvedValue(appUser("SUPPLIER"));
+    const res = await adminLogin(jsonRequest("/api/auth/admin-login", { body: goodLogin }));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.code).toBe("ADMIN_ACCOUNT_REQUIRED");
+    expect(h.auth.signOut).toHaveBeenCalledTimes(1);
+    expect(h.userUpdate).not.toHaveBeenCalled();
+  });
+
+  it("does not let an administrator redirect into the provider workspace", async () => {
+    h.auth.signInWithPassword.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
+    h.syncAppUser.mockResolvedValue(appUser("ADMIN"));
+    const res = await adminLogin(jsonRequest("/api/auth/admin-login", { body: { ...goodLogin, next: "/supplier/dashboard" } }));
+    expect((await res.json()).data.redirectTo).toBe("/admin/dashboard");
   });
 });
 

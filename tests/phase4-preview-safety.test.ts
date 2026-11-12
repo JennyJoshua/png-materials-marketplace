@@ -32,7 +32,7 @@ describe("Render pull-request preview safety", () => {
   it("avoids Supabase session refresh and profile synchronization in previews", () => {
     const previewBranch = middleware.slice(
       middleware.indexOf("if (isPullRequestPreview)"),
-      middleware.indexOf("// Only protected application areas"),
+      middleware.indexOf("// The dedicated administrator sign-in is public;"),
     );
     expect(previewBranch).not.toContain("updateSession(request)");
     expect(previewBranch).not.toContain("getAppUser");

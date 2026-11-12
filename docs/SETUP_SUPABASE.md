@@ -151,20 +151,34 @@ select count(*) from pg_policies;   -- expect 0 for these tables
 
 Then confirm the REST API is closed: `curl "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/users?select=*" -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY"` should return an empty list or a permission error, never user rows.
 
-## 7. Create the first administrator (controlled manual step)
+## 7. Create and sign in to the first administrator (controlled manual step)
 
-Nobody can pick ADMIN at registration, and no admin password is ever stored in the repository.
+Nobody can choose ADMIN during public registration. Public registration is for individual and business providers only. Do not register a buyer/customer account to bootstrap an administrator.
 
-1. Register through the website as a normal customer using the administrator's real email, and confirm the email.
-2. Check that this is the intended person. In the SQL editor run (replace the email):
+1. Use an existing, verified Supabase Auth identity belonging to the intended administrator and confirm that a matching application row exists in `public.users`. Never promote an account based only on a browser-supplied role or user metadata.
+2. In the SQL editor, first inspect the exact row (replace the email) and confirm that exactly one intended account is returned:
 
    ```sql
-   update users set role = 'ADMIN', status = 'ACTIVE' where email = 'admin@example.com';
+   select id, email, role, status
+   from public.users
+   where lower(email) = lower('admin@example.com');
    ```
 
-3. Sign out and in again. The dashboard is now `/admin/dashboard`.
+3. Only after verifying the identity and row, promote that existing profile:
 
-To remove admin rights later, set the role back to `CUSTOMER`.
+   ```sql
+   update public.users
+   set role = 'ADMIN', status = 'ACTIVE'
+   where id = '<verified-user-uuid>'
+     and lower(email) = lower('admin@example.com');
+   ```
+
+   Confirm the update affected exactly one row. Do not insert, delete, or otherwise modify production records as part of a login-flow change. If no matching profile exists, stop and prepare a separately reviewed provisioning procedure; do not create an administrator through public registration.
+
+4. Sign out of any existing session. Open `/admin/login` and sign in with the administrator's verified email and Supabase Auth password. The administrator-only endpoint checks the database role and sends the account to `/admin/dashboard`.
+5. Provider accounts use `/login`; they cannot sign in through `/admin/login`. Administrators cannot use the provider sign-in endpoint. Both flows verify the authoritative database role after Supabase authentication.
+
+To remove admin rights later, change the verified user's database role to an appropriate non-admin role through a separately reviewed owner-controlled operation. Never expose administrator provisioning in public registration.
 
 ## 8. Storage (future)
 
