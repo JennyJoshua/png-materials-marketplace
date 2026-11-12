@@ -11,10 +11,12 @@ const NOTICES: Record<string, string> = {
   suspended: "This administrator account is suspended. Contact the platform owner.",
   profile: "Your administrator account setup is incomplete. Contact the platform owner.",
   unavailable: "The service is temporarily unavailable. Please try again shortly.",
+  recovery: "Your recovery link is missing or expired. Request a new one below.",
+
 };
 
-export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
-  const { next, error } = await searchParams;
+export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; success?: string }> }) {
+  const { next, error, success } = await searchParams;
   const user = await getAppUser().catch(() => null);
   if (user && user.status !== "SUSPENDED") {
     if (user.role === "ADMIN") redirect("/admin/dashboard");
@@ -24,7 +26,9 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
     <AppShell>
       <h1>Administrator sign in</h1>
       <p className="hint">This restricted sign-in is for authorised platform administrators only. Provider accounts cannot access administration.</p>
+      {success === "password-updated" ? <p className="alert info" role="status">Your password has been updated. Sign in with your new password.</p> : null}
       <LoginForm endpoint="/api/auth/admin-login" next={isSafeRelativePath(next) ? next : undefined} notice={error ? NOTICES[error] : undefined} />
+      <p style={{ marginTop: "0.75rem" }}><Link href="/admin/forgot-password">Forgot your password or setting it up for the first time?</Link></p>
       <p style={{ marginTop: "1rem" }}>Are you a provider? <Link href="/login">Go to provider sign in</Link>.</p>
     </AppShell>
   );

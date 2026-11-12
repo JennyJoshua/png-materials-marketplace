@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // The dedicated administrator sign-in is public; all other /admin paths remain protected.
-  if (pathname === "/admin/login") return NextResponse.next();
+  if (pathname === "/admin/login" || pathname === "/admin/forgot-password") return NextResponse.next();
 
   // The buyer dashboard is retired. Legacy customer data is retained, but all visitors use public browsing.
   if (isWithin(pathname, "/customer")) return NextResponse.redirect(new URL("/products", request.url));

@@ -2,6 +2,14 @@
 
 All significant project changes are recorded here.
 
+## 2026-11-12 — Administrator password setup and recovery
+
+- Added a password recovery request page linked from administrator sign-in, using Supabase Auth email recovery and a fixed same-origin callback.
+- Added an authenticated password-update page and server route. Password updates require a verified Supabase session, same-origin request, matching passwords, and the existing 10-character letter-and-number rule; the session is signed out after the update.
+- Added per-IP recovery rate limiting and generic responses that do not reveal whether an email address has an account.
+- Kept administrator provisioning separate: this feature does not create profiles, grant ADMIN roles, or change production database records.
+- Verification is performed through the pull-request CI checks; no recovery email is sent automatically.
+
 ## [0.1.3] - 2026-10-25 - Phase 1 stabilisation pass (delivered for review, not deployed)
 
 Done without access to Render or Supabase. No production change was made and no migration command was run. Phase 1 remains PARTIALLY COMPLETE and Phase 2 has not started. Full evidence: docs/PHASE_1_VERIFICATION_REPORT.md.

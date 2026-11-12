@@ -43,7 +43,7 @@ Leaked-password protection (Supabase checking new passwords against known breach
    - **Redirect URLs**: add `http://localhost:3000/auth/callback` and `https://<your-service>.onrender.com/auth/callback` (and your custom domain's `/auth/callback` later).
 5. Optional: configure custom SMTP before launch. Supabase's built-in email sender is heavily rate-limited and meant for testing.
 
-Password reset is also handled by Supabase Auth. The app has no reset page yet (planned for a later phase).
+Administrator password setup and recovery are implemented in the application. From `/admin/login`, open **Forgot your password or setting it up for the first time?**, enter the existing Auth account email, and request a recovery link. Supabase sends a one-time link back through `/auth/callback`; the user chooses a password on `/auth/update-password`. The application enforces at least 10 characters, including a letter and a number. The reset endpoint returns the same response whether or not the email exists and is rate-limited. Supabase Auth remains the only password store. Ensure the production `/auth/callback` URL is included in Supabase Authentication → URL Configuration → Redirect URLs. The recovery link is sent only when the user requests it; the app does not send one automatically.
 
 ## 5. Database migration: current state and Prisma's migration history
 
@@ -183,3 +183,15 @@ To remove admin rights later, change the verified user's database role to an app
 ## 8. Storage (future)
 
 Phase 1 creates **no bucket**. When uploads are added (supplier logos, product images, verification documents), create the buckets then: verification documents in a private bucket read through short-lived signed URLs; logos and product images may use a public-read bucket with writes only from server code. See ARCHITECTURE.md A10.
+
+
+## 9. Password setup and recovery
+
+The application provides a password-recovery flow for an existing Supabase Auth identity. On the administrator sign-in page, use **Forgot your password or setting it up for the first time?** and enter the email address of the existing administrator identity. Supabase sends a one-time recovery link; the invitation email itself does not contain a password.
+
+The recovery link returns to `/auth/callback?next=/auth/update-password`. The callback exchanges the PKCE code for a session and routes directly to the password-update page without creating, repairing, or changing an application profile or role. The password-update endpoint requires that authenticated recovery session and updates only the Supabase Auth password. It does not grant ADMIN privileges.
+
+The redirect URL must be allowed in Supabase Authentication → URL Configuration. Ensure the production callback URL is included (or covered by an existing wildcard):
+`https://png-materials-marketplace.onrender.com/auth/callback`.
+
+After saving the password, sign in at `/admin/login`. If the account is still rejected as incomplete, verify the matching `public.users` row and administrator role using the controlled provisioning procedure in section 7. Password recovery never promotes an account.

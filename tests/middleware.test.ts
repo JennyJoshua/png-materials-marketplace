@@ -30,6 +30,11 @@ describe("middleware (first line of defence)", () => {
     expect(res.status).toBe(200);
     expect(h.updateSession).not.toHaveBeenCalled();
   });
+  it("allows administrator password recovery without requiring a session", async () => {
+    const res = await middleware(at("/admin/forgot-password"));
+    expect(res.status).toBe(200);
+    expect(h.updateSession).not.toHaveBeenCalled();
+  });
   it("allows public marketplace pages without refreshing or requiring a session", async () => {
     const res = await middleware(at("/products"));
     expect(res.status).toBe(200);

@@ -28,6 +28,12 @@ export async function GET(request: Request) {
     if (error || !data.user) return NextResponse.redirect(`${origin}/login?error=callback`);
     exchanged = true;
 
+    // Password recovery is an authenticated credential update, not a profile-creation or role flow.
+    // Only this exact local destination bypasses profile synchronization.
+    if (searchParams.get("next") === "/auth/update-password") {
+      return NextResponse.redirect(`${origin}/auth/update-password`);
+    }
+
     const appUser = await syncAppUser(data.user);
     if (!appUser) {
       await supabase.auth.signOut();

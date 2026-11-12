@@ -8,6 +8,8 @@ const h = vi.hoisted(() => ({
     signOut: vi.fn(),
     exchangeCodeForSession: vi.fn(),
     getUser: vi.fn(),
+    resetPasswordForEmail: vi.fn(),
+    updateUser: vi.fn(),
   },
   admin: { updateUserById: vi.fn() },
   ensureProfile: vi.fn(),
@@ -32,7 +34,9 @@ import { POST as login } from "@/app/api/auth/login/route";
 import { POST as adminLogin } from "@/app/api/auth/admin-login/route";
 import { POST as logout } from "@/app/api/auth/logout/route";
 import { GET as callback } from "@/app/auth/callback/route";
-import { loginIpLimiter, loginLimiter, registerLimiter } from "@/lib/security/rate-limit";
+import { POST as passwordReset } from "@/app/api/auth/password-reset/route";
+import { POST as passwordUpdate } from "@/app/api/auth/update-password/route";
+import { loginIpLimiter, loginLimiter, passwordResetLimiter, registerLimiter } from "@/lib/security/rate-limit";
 
 const newAuthUser = supabaseUser({ email_confirmed_at: undefined });
 const appUser = (role: string, status = "ACTIVE") => ({
@@ -50,8 +54,12 @@ beforeEach(() => {
   registerLimiter.reset();
   loginLimiter.reset();
   loginIpLimiter.reset();
+  passwordResetLimiter.reset();
   h.auth.signUp.mockResolvedValue({ data: { user: newAuthUser, session: null }, error: null });
   h.auth.signOut.mockResolvedValue({ error: null });
+  h.auth.resetPasswordForEmail.mockResolvedValue({ error: null });
+  h.auth.updateUser.mockResolvedValue({ error: null });
+  h.auth.getUser.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
   h.admin.updateUserById.mockResolvedValue({ error: null });
   h.ensureProfile.mockResolvedValue({ id: newAuthUser.id });
   h.userUpdate.mockResolvedValue({});
@@ -316,6 +324,51 @@ describe("POST /api/auth/logout", () => {
   });
 });
 
+describe("POST /api/auth/password-reset", () => {
+  it("sends a recovery link to Supabase with the password-update callback and hides account existence", async () => {
+    const res = await passwordReset(jsonRequest("/api/auth/password-reset", { body: { email: "Admin@Example.com" } }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.message).toContain("If an account exists");
+    expect(h.auth.resetPasswordForEmail).toHaveBeenCalledWith("admin@example.com", {
+      redirectTo: "https://app.test/auth/callback?next=/auth/update-password",
+    });
+  });
+
+  it("rejects cross-origin requests and rate limits repeated requests", async () => {
+    expect((await passwordReset(jsonRequest("/api/auth/password-reset", { body: { email: "admin@example.com" }, origin: "https://evil.example" }))).status).toBe(403);
+    let last: Response | undefined;
+    for (let i = 0; i < 4; i++) last = await passwordReset(jsonRequest("/api/auth/password-reset", { body: { email: "admin@example.com" }, headers: { "x-forwarded-for": "203.0.113.20" } }));
+    expect(last!.status).toBe(429);
+  });
+
+  it("returns the same generic response when Supabase reports a delivery failure", async () => {
+    h.auth.resetPasswordForEmail.mockResolvedValue({ error: { message: "provider unavailable" } });
+    const res = await passwordReset(jsonRequest("/api/auth/password-reset", { body: { email: "admin@example.com" } }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.message).toContain("If an account exists");
+  });
+});
+
+describe("POST /api/auth/update-password", () => {
+  it("requires a recovery session and updates only the authenticated Auth password", async () => {
+    const res = await passwordUpdate(jsonRequest("/api/auth/update-password", { body: { password: "newSecurePassword42", confirmPassword: "newSecurePassword42" } }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).data).toEqual({ updated: true, redirectTo: "/admin/login" });
+    expect(h.auth.updateUser).toHaveBeenCalledWith({ password: "newSecurePassword42" });
+    expect(h.auth.signOut).toHaveBeenCalled();
+    expect(h.syncAppUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing sessions, mismatched passwords, and cross-origin requests", async () => {
+    h.auth.getUser.mockResolvedValue({ data: { user: null }, error: { message: "no session" } });
+    expect((await passwordUpdate(jsonRequest("/api/auth/update-password", { body: { password: "newSecurePassword42", confirmPassword: "newSecurePassword42" } }))).status).toBe(401);
+    h.auth.getUser.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
+    expect((await passwordUpdate(jsonRequest("/api/auth/update-password", { body: { password: "newSecurePassword42", confirmPassword: "differentPassword42" } }))).status).toBe(400);
+    expect((await passwordUpdate(jsonRequest("/api/auth/update-password", { body: { password: "newSecurePassword42", confirmPassword: "newSecurePassword42" }, origin: "https://evil.example" }))).status).toBe(403);
+    expect(h.auth.updateUser).not.toHaveBeenCalled();
+  });
+});
+
 describe("GET /auth/callback (e-mail confirmation)", () => {
   const cb = (query: string) => callback(new Request(`https://app.test/auth/callback${query}`));
 
@@ -323,6 +376,13 @@ describe("GET /auth/callback (e-mail confirmation)", () => {
     expect((await cb("")).headers.get("location")).toBe("https://app.test/login?error=callback");
     h.auth.exchangeCodeForSession.mockResolvedValue({ data: { user: null }, error: { message: "bad" } });
     expect((await cb("?code=bad")).headers.get("location")).toBe("https://app.test/login?error=callback");
+  });
+
+  it("routes password recovery sessions to the password form without syncing or changing a profile", async () => {
+    h.auth.exchangeCodeForSession.mockResolvedValue({ data: { user: supabaseUser() }, error: null });
+    const res = await cb("?code=recovery&next=%2Fauth%2Fupdate-password");
+    expect(res.headers.get("location")).toBe("https://app.test/auth/update-password");
+    expect(h.syncAppUser).not.toHaveBeenCalled();
   });
 
   it("creates/activates the profile and sends the user to their dashboard", async () => {

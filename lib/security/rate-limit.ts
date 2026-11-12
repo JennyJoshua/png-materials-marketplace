@@ -59,3 +59,6 @@ export const registerLimiter = shared("register", 5, 60 * 60 * 1000);
 export const loginLimiter = shared("login", 10, 15 * 60 * 1000);
 /** 40 sign-in attempts per IP per 15 minutes (covers credential stuffing across many e-mails). */
 export const loginIpLimiter = shared("login-ip", 40, 15 * 60 * 1000);
+
+/** 3 password recovery emails per IP per hour. Supabase Auth applies additional limits. */
+export const passwordResetLimiter = shared("password-reset", 3, 60 * 60 * 1000);

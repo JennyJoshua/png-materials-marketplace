@@ -5,6 +5,15 @@ const phone = z.string().trim().regex(/^\+?[0-9 ()-]{7,20}$/, "Enter a valid pho
 const fullName = z.string().trim().min(2, "Enter your full name.").max(120);
 export const passwordRule = z.string().min(10, "Use at least 10 characters.").max(72, "Use at most 72 characters.")
   .regex(/[A-Za-z]/, "Include at least one letter.").regex(/[0-9]/, "Include at least one number.");
+
+export const passwordResetSchema = z.strictObject({ email });
+export const passwordUpdateSchema = z.strictObject({
+  password: passwordRule,
+  confirmPassword: z.string().max(72),
+}).refine(value => value.password === value.confirmPassword, {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"],
+});
 const shortText = (label: string, min = 2, max = 200) => z.string().trim().min(min, `Enter ${label}.`).max(max);
 const passwordsMatch = (v: { password: string; confirmPassword: string }) => v.password === v.confirmPassword;
 const mismatch = { message: "Passwords do not match.", path: ["confirmPassword"] };

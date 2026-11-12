@@ -40,6 +40,65 @@ export function LoginForm({ next, notice, endpoint = "/api/auth/login" }: { next
   );
 }
 
+export function PasswordResetRequestForm() {
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setError(null); setMessage(null); setBusy(true);
+    const form = new FormData(event.currentTarget);
+    const result = await postJson("/api/auth/password-reset", { email: form.get("email") }).catch(() => null);
+    setBusy(false);
+    if (!result) return setError("Could not reach the server. Check your connection and try again.");
+    if (!result.ok) return setError(result.body.error?.message ?? "Could not request a recovery link.");
+    const data = result.body.data as { message: string };
+    setMessage(data.message);
+  }
+
+  return (
+    <>
+      {error ? <p className="alert" role="alert">{error}</p> : null}
+      {message ? <p className="alert info" role="status">{message} Check your inbox and spam folder. The link expires; request another if it has expired.</p> : null}
+      <form className="stack" onSubmit={onSubmit} noValidate>
+        <label>Administrator email<input name="email" type="email" autoComplete="email" required /></label>
+        <button className="btn" type="submit" disabled={busy}>{busy ? "Sending…" : "Send recovery link"}</button>
+      </form>
+    </>
+  );
+}
+
+export function PasswordUpdateForm() {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setError(null); setBusy(true);
+    const form = new FormData(event.currentTarget);
+    const result = await postJson("/api/auth/update-password", {
+      password: form.get("password"),
+      confirmPassword: form.get("confirmPassword"),
+    }).catch(() => null);
+    setBusy(false);
+    if (!result) return setError("Could not reach the server. Check your connection and try again.");
+    if (!result.ok) return setError(result.body.error?.message ?? "Could not update your password.");
+    router.replace("/admin/login?success=password-updated");
+    router.refresh();
+  }
+
+  return (
+    <>
+      {error ? <p className="alert" role="alert">{error}</p> : null}
+      <form className="stack" onSubmit={onSubmit} noValidate>
+        <label>New password<span className="hint">At least 10 characters, with a letter and a number.</span><input name="password" type="password" autoComplete="new-password" required /></label>
+        <label>Confirm new password<input name="confirmPassword" type="password" autoComplete="new-password" required /></label>
+        <button className="btn" type="submit" disabled={busy}>{busy ? "Updating…" : "Save new password"}</button>
+      </form>
+    </>
+  );
+}
+
 export function RegisterForm() {
   const router = useRouter();
   const [accountType, setAccountType] = useState<"INDIVIDUAL_PROVIDER" | "BUSINESS_PROVIDER">("INDIVIDUAL_PROVIDER");
