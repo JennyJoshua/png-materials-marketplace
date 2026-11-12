@@ -45,17 +45,20 @@ enum ProviderKind {
   INDIVIDUAL
   BUSINESS
 }
+
 enum ProviderType {
   PRODUCTS
   SERVICES
   BOTH
 }
+
 enum ProviderStatus {
   DRAFT
   PENDING_REVIEW
   ACTIVE
   SUSPENDED
 }
+
 enum ProviderVerificationLevel {
   UNVERIFIED
   CONTACT_CONFIRMED
@@ -76,6 +79,26 @@ enum ProductListingStatus {
   ARCHIVED
 }
 
+enum EnquiryType {
+  PRODUCT
+  SERVICE
+}
+
+enum EnquiryStatus {
+  SUBMITTED
+  VIEWED
+  IN_DISCUSSION
+  QUOTATION_SENT
+  CLOSED
+  DECLINED
+  CANCELLED
+}
+
+enum EnquiryMessageSenderType {
+  VISITOR
+  PROVIDER
+  SYSTEM
+}
 
 /// Application user record. `id` = Supabase Auth user UUID (supplied by the application, no DB default).
 /// `role` here is the AUTHORITATIVE application role.
@@ -95,6 +118,7 @@ model User {
   auditLogs       AuditLog[]
   providerProfile ProviderProfile?
   verifiedProviders ProviderProfile[] @relation("ProviderVerifier")
+  enquiryMessages EnquiryMessage[]
 
   @@index([role])
   @@index([status])
@@ -146,7 +170,7 @@ model ProductCategory {
   createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  listings    ProductListing[]
+  listings ProductListing[]
 
   @@map("product_categories")
 }
@@ -198,6 +222,7 @@ model ProviderProfile {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   verifiedBy User? @relation("ProviderVerifier", fields: [verifiedByUserId], references: [id], onDelete: Restrict)
   productListings ProductListing[]
+  enquiries Enquiry[]
   @@index([status, createdAt])
   @@index([verifiedByUserId])
   @@index([verificationLevel])
@@ -213,9 +238,9 @@ model ServiceCategory {
   status CategoryStatus @default(ACTIVE)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  enquiries Enquiry[]
   @@map("service_categories")
 }
-
 
 /// Provider-owned product offer. Public visibility is enforced in server queries:
 /// listing ACTIVE + provider ACTIVE + category ACTIVE. All access uses server Prisma.
@@ -238,11 +263,79 @@ model ProductListing {
 
   providerProfile ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
   category        ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  enquiries       Enquiry[]
 
+  @@unique([id, providerProfileId])
   @@index([providerProfileId, listingStatus])
   @@index([categoryId, listingStatus])
   @@index([listingStatus, updatedAt])
   @@index([price])
   @@index([name])
   @@map("product_listings")
+}
+
+/// Guest-first enquiry header. Every enquiry is routed to exactly one provider.
+model Enquiry {
+  id                String       @id @default(uuid()) @db.Uuid
+  publicReference   String       @unique @map("public_reference") @db.VarChar(24)
+  type              EnquiryType
+  providerProfileId String       @map("provider_profile_id") @db.Uuid
+  productListingId  String?      @map("product_listing_id") @db.Uuid
+  serviceCategoryId String?      @map("service_category_id") @db.Uuid
+  visitorName       String       @map("visitor_name") @db.VarChar(120)
+  visitorEmail      String       @map("visitor_email") @db.VarChar(254)
+  visitorPhone      String       @map("visitor_phone") @db.VarChar(40)
+  subject           String       @db.VarChar(160)
+  summary           String       @db.VarChar(4000)
+  status            EnquiryStatus @default(SUBMITTED)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  lastActivityAt    DateTime     @default(now()) @map("last_activity_at") @db.Timestamptz(6)
+  closedAt          DateTime?    @map("closed_at") @db.Timestamptz(6)
+
+  providerProfile ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  productListing  ProductListing? @relation(fields: [productListingId, providerProfileId], references: [id, providerProfileId], onDelete: Restrict)
+  serviceCategory ServiceCategory? @relation(fields: [serviceCategoryId], references: [id], onDelete: Restrict)
+  messages        EnquiryMessage[]
+  accessCredentials EnquiryAccessCredential[]
+
+  @@index([providerProfileId, status, lastActivityAt])
+  @@index([type, createdAt])
+  @@index([createdAt])
+  @@map("enquiries")
+}
+
+/// Conversation entries are separate from the enquiry summary; the initial visitor message
+/// is stored here exactly once. Message edits are not part of this phase.
+model EnquiryMessage {
+  id           String                   @id @default(uuid()) @db.Uuid
+  enquiryId    String                   @map("enquiry_id") @db.Uuid
+  senderType   EnquiryMessageSenderType  @map("sender_type")
+  senderUserId String?                  @map("sender_user_id") @db.Uuid
+  body         String                   @db.VarChar(4000)
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  enquiry   Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  senderUser User?  @relation(fields: [senderUserId], references: [id], onDelete: Restrict)
+
+  @@index([enquiryId, createdAt])
+  @@index([senderUserId])
+  @@map("enquiry_messages")
+}
+
+/// Only a SHA-256 digest is persisted. The raw visitor capability is returned once by the
+/// credential-issuing service and must never be written to logs or audit metadata.
+model EnquiryAccessCredential {
+  id         String    @id @default(uuid()) @db.Uuid
+  enquiryId  String    @map("enquiry_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash") @db.Char(64)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(6)
+
+  enquiry Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+
+  @@index([enquiryId, expiresAt])
+  @@map("enquiry_access_credentials")
 }
