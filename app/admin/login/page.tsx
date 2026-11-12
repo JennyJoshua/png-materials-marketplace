@@ -15,7 +15,7 @@ const NOTICES: Record<string, string> = {
 
 };
 
-export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
+export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; success?: string }> }) {
   const { next, error, success } = await searchParams;
   const user = await getAppUser().catch(() => null);
   if (user && user.status !== "SUSPENDED") {
