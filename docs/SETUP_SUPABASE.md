@@ -185,7 +185,7 @@ To remove admin rights later, change the verified user's database role to an app
 Phase 1 creates **no bucket**. When uploads are added (supplier logos, product images, verification documents), create the buckets then: verification documents in a private bucket read through short-lived signed URLs; logos and product images may use a public-read bucket with writes only from server code. See ARCHITECTURE.md A10.
 
 
-## 8. Password setup and recovery
+## 9. Password setup and recovery
 
 The application provides a password-recovery flow for an existing Supabase Auth identity. On the administrator sign-in page, use **Forgot your password or setting it up for the first time?** and enter the email address of the existing administrator identity. Supabase sends a one-time recovery link; the invitation email itself does not contain a password.
 
