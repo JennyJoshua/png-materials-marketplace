@@ -13,14 +13,14 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? <span id={id} className="field-error">{message}</span> : null;
 }
 
-export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
+export function LoginForm({ next, notice, endpoint = "/api/auth/login" }: { next?: string; notice?: string; endpoint?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(null); setBusy(true);
     const form = new FormData(event.currentTarget);
-    const result = await postJson("/api/auth/login", { email: form.get("email"), password: form.get("password"), ...(next ? { next } : {}) }).catch(() => null);
+    const result = await postJson(endpoint, { email: form.get("email"), password: form.get("password"), ...(next ? { next } : {}) }).catch(() => null);
     setBusy(false);
     if (!result) return setError("Could not reach the server. Check your connection and try again.");
     if (!result.ok) return setError(result.body.error?.message ?? "Could not sign in.");
