@@ -25,6 +25,7 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
       <h1>Administrator sign in</h1>
       <p className="hint">This restricted sign-in is for authorised platform administrators only. Provider accounts cannot access administration.</p>
       <LoginForm endpoint="/api/auth/admin-login" next={isSafeRelativePath(next) ? next : undefined} notice={error ? NOTICES[error] : undefined} />
+      <p style={{ marginTop: "0.75rem" }}><Link href="/admin/forgot-password">Forgot your password or setting it up for the first time?</Link></p>
       <p style={{ marginTop: "1rem" }}>Are you a provider? <Link href="/login">Go to provider sign in</Link>.</p>
     </AppShell>
   );
