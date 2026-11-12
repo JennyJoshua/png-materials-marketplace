@@ -173,7 +173,7 @@ This section supersedes any earlier wording in this README that suggests buyers 
 - The platform does not offer buyer/customer registration, buyer accounts or buyer dashboards.
 - Registration is exclusively for providers: an individual provider or a business provider. A provider account may offer products, services, or both, using one provider identity.
 - A registered provider who wants to browse or purchase goods or services uses the same public experience as any other visitor; no buyer account or sign-in is required.
-- Administrators remain restricted, privileged accounts and cannot self-register.
+- Administrators remain restricted, privileged accounts and cannot self-register. They use the separate administrator sign-in at `/admin/login`; providers use `/login`.
 - Future enquiries, quotation requests, orders or bookings must be designed for guest-first use. Collect only the contact and fulfilment details necessary for a particular request; do not turn this into mandatory buyer account registration.
 
 The existing CUSTOMER role, customer profile, registration route and dashboards are legacy implementation elements. This decision does not silently delete existing records or change the live database. Their retirement or migration requires a reviewed implementation plan and additive/safe database migration.
