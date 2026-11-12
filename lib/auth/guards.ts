@@ -24,9 +24,9 @@ export async function resolveAccess(allowedRoles?: readonly Role[]): Promise<Acc
 
 export async function requirePageRole(role: Role, currentPath: string): Promise<AppUser> {
   const access = await resolveAccess([role]);
+  if (access.ok) return access.user;
   const loginPath = role === "ADMIN" ? "/admin/login" : "/login";
-  switch (access.ok ? "ok" : access.reason) {
-    case "ok": return access.user;
+  switch (access.reason) {
     case "unauthenticated":
       redirect(`${loginPath}?next=${encodeURIComponent(currentPath)}`);
     case "forbidden":
