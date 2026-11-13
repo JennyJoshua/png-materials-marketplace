@@ -1,6 +1,6 @@
 # Phase 5A — Enquiry foundation
 
-Status: implemented on `feat/phase-5-enquiry-foundation`; pending automated validation and owner review.
+Status: implemented on `feat/phase-5-enquiry-foundation`; automated validation passed. Existing migration checksum reconciliation and owner review remain outstanding.
 
 ## Scope
 
