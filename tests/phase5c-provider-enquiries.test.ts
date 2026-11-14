@@ -70,7 +70,7 @@ describe("Phase 5C provider enquiry APIs", () => {
     const response = await listEnquiries(req("https://app.test/api/providers/enquiries?page=2&pageSize=10&status=SUBMITTED&q=price"));
     expect(response.status).toBe(200);
     expect(mocks.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ providerProfileId: provider.id, status: "SUBMITTED" }),
+      where: expect.objectContaining({ providerProfileId: provider.id, type: "PRODUCT", status: "SUBMITTED" }),
       skip: 10, take: 10,
     }));
   });
@@ -87,11 +87,12 @@ describe("Phase 5C provider enquiry APIs", () => {
     expect(response.status).toBe(404);
   });
 
-  it("does not return visitor contact details in the inbox list selection", async () => {
+  it("does not select visitor contacts or message content in the inbox list", async () => {
     await listEnquiries(req());
     const select = mocks.findMany.mock.calls[0]![0].select;
     expect(select).not.toHaveProperty("visitorEmail");
     expect(select).not.toHaveProperty("visitorPhone");
+    expect(select).not.toHaveProperty("summary");
     expect(select).not.toHaveProperty("messages");
   });
 
@@ -105,7 +106,7 @@ describe("Phase 5C provider enquiry APIs", () => {
     const response = await patchEnquiry(req("https://app.test/api/providers/enquiries/" + enquiry.id, "PATCH", { status: "VIEWED" }), context);
     expect(response.status).toBe(200);
     expect(mocks.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: enquiry.id, providerProfileId: provider.id, status: "SUBMITTED" },
+      where: { id: enquiry.id, providerProfileId: provider.id, type: "PRODUCT", status: "SUBMITTED" },
       data: expect.objectContaining({ status: "VIEWED", lastActivityAt: expect.any(Date) }),
     }));
     expect(mocks.audit).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({

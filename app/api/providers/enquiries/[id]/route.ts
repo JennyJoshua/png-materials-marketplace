@@ -37,7 +37,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
   try {
     const enquiry = await prisma.enquiry.findFirst({
-      where: { id, providerProfileId: provider.id },
+      where: { id, providerProfileId: provider.id, type: "PRODUCT" },
       select: {
         id: true, publicReference: true, type: true, subject: true, summary: true, status: true,
         visitorName: true, visitorEmail: true, visitorPhone: true,
@@ -74,7 +74,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     const result = await prisma.$transaction(async (tx) => {
       const current = await tx.enquiry.findFirst({
-        where: { id, providerProfileId: provider.id },
+        where: { id, providerProfileId: provider.id, type: "PRODUCT" },
         select: { id: true, status: true },
       });
       if (!current) return { error: "NOT_FOUND" as const };
@@ -83,7 +83,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
       const now = new Date();
       const changed = await tx.enquiry.updateMany({
-        where: { id, providerProfileId: provider.id, status: current.status },
+        where: { id, providerProfileId: provider.id, type: "PRODUCT", status: current.status },
         data: {
           status: nextStatus,
           lastActivityAt: now,

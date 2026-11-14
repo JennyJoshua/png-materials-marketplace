@@ -38,6 +38,7 @@ export async function GET(request: Request) {
 
   const where = {
     providerProfileId: provider.id,
+    type: "PRODUCT" as const,
     ...(status ? { status: status as EnquiryStatus } : {}),
     ...(q ? { OR: [
       { publicReference: { contains: q, mode: "insensitive" as const } },
@@ -54,7 +55,7 @@ export async function GET(request: Request) {
         skip: (page - 1) * pageSize,
         take: pageSize,
         select: {
-          id: true, publicReference: true, subject: true, summary: true, status: true,
+          id: true, publicReference: true, subject: true, status: true,
           createdAt: true, lastActivityAt: true, updatedAt: true,
           productListing: { select: { id: true, name: true, brand: true, unit: true, stockStatus: true } },
         },

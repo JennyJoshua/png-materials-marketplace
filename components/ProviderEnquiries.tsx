@@ -5,12 +5,12 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 type Status = "SUBMITTED" | "VIEWED" | "IN_DISCUSSION" | "QUOTATION_SENT" | "CLOSED" | "DECLINED" | "CANCELLED";
 type Listing = { id: string; name: string; brand: string | null; unit: string; stockStatus: string } | null;
 type EnquiryRow = {
-  id: string; publicReference: string; subject: string; summary: string; status: Status;
+  id: string; publicReference: string; subject: string; status: Status;
   createdAt: string; lastActivityAt: string; updatedAt: string; productListing: Listing;
 };
 type Message = { id: string; senderType: "VISITOR" | "PROVIDER" | "SYSTEM"; body: string; createdAt: string };
 type Detail = EnquiryRow & {
-  type: string; visitorName: string; visitorEmail: string; visitorPhone: string;
+  type: string; summary: string; visitorName: string; visitorEmail: string; visitorPhone: string;
   closedAt: string | null; messages: Message[];
   productListing: (NonNullable<Listing> & { specification: string | null; listingStatus: string }) | null;
 };
