@@ -7,4 +7,10 @@ export const providerProfileSchema = z.object({
  address:optionalText(300), province:z.string().trim().min(1).max(100), district:optionalText(100), townOrArea:optionalText(120),
  businessRegistrationNumber:optionalText(100), websiteUrl:website, logoUrl:optionalText(500), deliveryAvailable:z.boolean().default(false), pickupAvailable:z.boolean().default(false),
 }).strict();
-export const providerAdminActionSchema = z.object({status:z.enum(["ACTIVE","SUSPENDED"]).optional(),verificationLevel:z.enum(["UNVERIFIED","CONTACT_CONFIRMED","DOCUMENTS_CHECKED"]).optional()}).strict().refine(v=>v.status!==undefined||v.verificationLevel!==undefined,"Choose a status or verification change.");
+export const providerAdminActionSchema = z.object({
+ status: z.enum(["DRAFT", "PENDING_REVIEW", "ACTIVE", "SUSPENDED"]).optional(),
+ verificationLevel: z.enum(["UNVERIFIED", "CONTACT_CONFIRMED", "DOCUMENTS_CHECKED"]).optional(),
+}).strict().refine(
+ v => v.status !== undefined || v.verificationLevel !== undefined,
+ "Choose a status or verification change.",
+);
