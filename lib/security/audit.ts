@@ -22,6 +22,7 @@ export const AUDIT_ACTIONS = [
   "PRODUCT_LISTING_MODERATED",
   "PRODUCT_CATEGORY_CREATED",
   "PRODUCT_CATEGORY_UPDATED",
+  "ENQUIRY_SUBMITTED",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

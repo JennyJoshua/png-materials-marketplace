@@ -27,9 +27,11 @@ export function databaseUnavailableResponse() {
 }
 
 export function getClientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  const first = forwarded?.split(",")[0]?.trim();
-  return first || request.headers.get("x-real-ip") || "unknown";
+  // Prefer the address Cloudflare supplies to the origin. Never trust the leftmost
+  // X-Forwarded-For entry: clients can prepend spoofed values to that header.
+  return request.headers.get("cf-connecting-ip")?.trim()
+    || request.headers.get("x-real-ip")?.trim()
+    || "unknown";
 }
 
 /**
