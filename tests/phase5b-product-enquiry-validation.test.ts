@@ -26,6 +26,7 @@ describe("public product enquiry input", () => {
   it("requires valid contact information and non-empty content", () => {
     expect(productEnquiryInputSchema.safeParse({ ...valid, visitorEmail: "not-an-email" }).success).toBe(false);
     expect(productEnquiryInputSchema.safeParse({ ...valid, visitorPhone: "abc" }).success).toBe(false);
+    expect(productEnquiryInputSchema.safeParse({ ...valid, visitorPhone: "++--()" }).success).toBe(false);
     expect(productEnquiryInputSchema.safeParse({ ...valid, message: "  " }).success).toBe(false);
   });
 
