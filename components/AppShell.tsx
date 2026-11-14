@@ -18,6 +18,7 @@ export function AppShell({ user, children }: { user?: ShellUser; children: React
                 <Link href="/supplier/dashboard">Provider workspace</Link>
                 <Link href="/provider/profile">Provider profile</Link>
                 <Link href="/provider/products">My product listings</Link>
+                <Link href="/provider/enquiries">Enquiry inbox</Link>
                 <form action="/api/auth/logout" method="post"><button type="submit">Sign out</button></form>
               </>
             ) : user?.role === "ADMIN" ? (

@@ -1,0 +1,30 @@
+.enquiry-workspace { display: grid; gap: 1rem; }
+.enquiry-filters { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem; align-items: end; }
+.enquiry-filters label:last-child { grid-column: 1 / -1; }
+.enquiry-columns { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; }
+.results-heading, .enquiry-row-top, .pagination { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.enquiry-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+.enquiry-row { display: grid; width: 100%; gap: 0.25rem; text-align: left; padding: 0.85rem; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; color: var(--ink); font: inherit; cursor: pointer; }
+.enquiry-row:hover, .enquiry-row.selected { border-color: var(--gold-dark); background: #fffaf0; }
+.enquiry-row-top strong { overflow-wrap: anywhere; }
+.enquiry-row .badge { white-space: nowrap; }
+.pagination { margin-top: 1rem; flex-wrap: wrap; }
+.pagination .btn { min-height: 40px; padding: 0 0.75rem; }
+.enquiry-detail { min-width: 0; }
+.enquiry-subsection { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 1rem; overflow-wrap: anywhere; }
+.enquiry-subsection h3 { font-size: 1rem; }
+.enquiry-subsection p { margin-bottom: 0.35rem; }
+.enquiry-message { background: #f6f7f8; border-left: 3px solid var(--gold); padding: 0.75rem; margin: 0.75rem 0; border-radius: 0 var(--radius) var(--radius) 0; }
+.enquiry-message p { margin-bottom: 0.35rem; }
+.message-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.enquiry-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+.enquiry-actions .btn { min-height: 42px; padding: 0 0.8rem; }
+@media (min-width: 860px) {
+  .enquiry-columns { grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.15fr); }
+  .enquiry-detail { position: sticky; top: 1rem; }
+}
+@media (max-width: 420px) {
+  .enquiry-filters { grid-template-columns: 1fr; }
+  .enquiry-filters label:last-child { grid-column: auto; }
+  .enquiry-filters .btn { width: 100%; }
+}
