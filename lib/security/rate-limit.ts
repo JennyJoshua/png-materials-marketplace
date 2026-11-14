@@ -60,5 +60,8 @@ export const loginLimiter = shared("login", 10, 15 * 60 * 1000);
 /** 40 sign-in attempts per IP per 15 minutes (covers credential stuffing across many e-mails). */
 export const loginIpLimiter = shared("login-ip", 40, 15 * 60 * 1000);
 
+/** 10 public product enquiries per IP per 15 minutes. This is instance-local abuse protection. */
+export const publicEnquiryLimiter = shared("public-enquiry", 10, 15 * 60 * 1000);
+
 /** 3 password recovery emails per IP per hour. Supabase Auth applies additional limits. */
 export const passwordResetLimiter = shared("password-reset", 3, 60 * 60 * 1000);
