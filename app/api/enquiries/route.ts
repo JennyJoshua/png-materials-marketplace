@@ -1,7 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { isIP } from "node:net";
 import { Prisma } from "@prisma/client";
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { publicListingWhere } from "@/lib/products/queries";
 import { jsonError, jsonOk, sameOriginError } from "@/lib/security/http";
