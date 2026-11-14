@@ -1,6 +1,6 @@
 # Phase 5A — Enquiry foundation
 
-Status: implemented on `feat/phase-5-enquiry-foundation`; automated validation passed. Existing migration checksum reconciliation and owner review remain outstanding.
+Status: implemented on `feat/phase-5-enquiry-foundation`; automated validation and existing migration checksum reconciliation passed. Owner review remains outstanding.
 
 ## Scope
 
@@ -48,7 +48,7 @@ Before merge, verify:
 1. Prisma schema validation and client generation.
 2. Full Vitest suite, lint, typecheck, and production build.
 3. Migration SQL against a disposable PostgreSQL database.
-4. All four previously applied migration checksums against the committed migration files and the live Prisma migration ledger.
+4. All four previously applied migration checksums against the committed migration files and the live Prisma migration ledger. Phase 2, provider-verifier integrity, and Phase 3 match byte-for-byte. Phase 1's live checksum matches the documented CRLF-formatted file (`9801fc2830357b8a120aa6f196359087578aec8eb34b15b5783f9c46e9f0f525`); the committed LF representation hashes differently, as expected from line-ending conversion. No migration repair or `migrate resolve` is required.
 5. The resulting migration is additive, enables RLS, has no policies, and grants no direct table access to client roles.
 6. No raw visitor token is persisted or logged.
 
